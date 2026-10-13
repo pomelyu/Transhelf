@@ -295,6 +295,132 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'English'**
   String get languageEnglish;
+
+  /// No description provided for @googleTranslateName.
+  ///
+  /// In zh, this message translates to:
+  /// **'Google 翻譯'**
+  String get googleTranslateName;
+
+  /// No description provided for @googleConfigured.
+  ///
+  /// In zh, this message translates to:
+  /// **'已設定'**
+  String get googleConfigured;
+
+  /// No description provided for @googleNotConfigured.
+  ///
+  /// In zh, this message translates to:
+  /// **'尚未設定'**
+  String get googleNotConfigured;
+
+  /// No description provided for @googlePending.
+  ///
+  /// In zh, this message translates to:
+  /// **'待設定'**
+  String get googlePending;
+
+  /// No description provided for @googleApiKeyHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'請輸入 API key'**
+  String get googleApiKeyHint;
+
+  /// No description provided for @googleApiKeySaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'API key 已儲存'**
+  String get googleApiKeySaved;
+
+  /// No description provided for @googleApiKeySaveFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'無法儲存 API key'**
+  String get googleApiKeySaveFailed;
+
+  /// No description provided for @googleShowApiKey.
+  ///
+  /// In zh, this message translates to:
+  /// **'顯示 API key'**
+  String get googleShowApiKey;
+
+  /// No description provided for @googleHideApiKey.
+  ///
+  /// In zh, this message translates to:
+  /// **'隱藏 API key'**
+  String get googleHideApiKey;
+
+  /// No description provided for @googleEditApiKey.
+  ///
+  /// In zh, this message translates to:
+  /// **'編輯 API key'**
+  String get googleEditApiKey;
+
+  /// No description provided for @googleServiceTip.
+  ///
+  /// In zh, this message translates to:
+  /// **'Google 翻譯會自動偵測來源語言，適合快速處理短句與一般內容。'**
+  String get googleServiceTip;
+
+  /// No description provided for @googleSaveSettings.
+  ///
+  /// In zh, this message translates to:
+  /// **'儲存設定'**
+  String get googleSaveSettings;
+
+  /// No description provided for @googlePresetUnavailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'不支援'**
+  String get googlePresetUnavailable;
+
+  /// No description provided for @googleDetectLanguage.
+  ///
+  /// In zh, this message translates to:
+  /// **'自動偵測'**
+  String get googleDetectLanguage;
+
+  /// No description provided for @googleJapanese.
+  ///
+  /// In zh, this message translates to:
+  /// **'日文'**
+  String get googleJapanese;
+
+  /// No description provided for @googleKorean.
+  ///
+  /// In zh, this message translates to:
+  /// **'韓文'**
+  String get googleKorean;
+
+  /// No description provided for @googleEnterText.
+  ///
+  /// In zh, this message translates to:
+  /// **'請輸入要翻譯的文字。'**
+  String get googleEnterText;
+
+  /// No description provided for @googleConfigureFirst.
+  ///
+  /// In zh, this message translates to:
+  /// **'請先設定 Google 翻譯 API key。'**
+  String get googleConfigureFirst;
+
+  /// No description provided for @googleApiKeyInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'API key 無效或未獲授權，請到設定更新。'**
+  String get googleApiKeyInvalid;
+
+  /// No description provided for @googleTranslationFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'翻譯失敗'**
+  String get googleTranslationFailed;
+
+  /// No description provided for @googleOpenSettings.
+  ///
+  /// In zh, this message translates to:
+  /// **'前往設定'**
+  String get googleOpenSettings;
 }
 
 class _AppLocalizationsDelegate

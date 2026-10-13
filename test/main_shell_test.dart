@@ -43,4 +43,51 @@ void main() {
     expect(find.byKey(const ValueKey('view.translate')), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 200));
   });
+
+  testWidgets(
+    'translator settings and engine dropdown follow Google-only scope',
+    (tester) async {
+      tester.view.physicalSize = const Size(402, 874);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      SharedPreferences.setMockInitialValues({});
+      final preferences = await SharedPreferences.getInstance();
+      await tester.pumpWidget(TranshelfApp(preferences: preferences));
+
+      await tester.tap(find.byKey(const ValueKey('engine_dropdown')));
+      await tester.pumpAndSettle();
+      expect(find.text('Gemini'), findsOneWidget);
+      expect(find.text('ChatGPT'), findsOneWidget);
+      await tester.tapAt(const Offset(370, 350));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const ValueKey('nav.settings')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('google_settings')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('google_api_key')), findsOneWidget);
+      expect(find.byKey(const ValueKey('save_google_api_key')), findsNothing);
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const ValueKey('google_api_key')))
+            .enabled,
+        isFalse,
+      );
+      await tester.tap(find.byKey(const ValueKey('edit_google_api_key')));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const ValueKey('google_api_key')))
+            .enabled,
+        isTrue,
+      );
+      expect(find.byKey(const ValueKey('save_google_api_key')), findsOneWidget);
+      expect(find.text('Google Cloud 專案 ID'), findsNothing);
+      expect(find.text('OAuth 存取權杖'), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('service_tab_1')));
+      await tester.pumpAndSettle();
+      expect(find.text('即將推出'), findsOneWidget);
+    },
+  );
 }

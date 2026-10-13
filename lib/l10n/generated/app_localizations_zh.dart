@@ -107,4 +107,67 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get languageEnglish => 'English';
+
+  @override
+  String get googleTranslateName => 'Google 翻譯';
+
+  @override
+  String get googleConfigured => '已設定';
+
+  @override
+  String get googleNotConfigured => '尚未設定';
+
+  @override
+  String get googlePending => '待設定';
+
+  @override
+  String get googleApiKeyHint => '請輸入 API key';
+
+  @override
+  String get googleApiKeySaved => 'API key 已儲存';
+
+  @override
+  String get googleApiKeySaveFailed => '無法儲存 API key';
+
+  @override
+  String get googleShowApiKey => '顯示 API key';
+
+  @override
+  String get googleHideApiKey => '隱藏 API key';
+
+  @override
+  String get googleEditApiKey => '編輯 API key';
+
+  @override
+  String get googleServiceTip => 'Google 翻譯會自動偵測來源語言，適合快速處理短句與一般內容。';
+
+  @override
+  String get googleSaveSettings => '儲存設定';
+
+  @override
+  String get googlePresetUnavailable => '不支援';
+
+  @override
+  String get googleDetectLanguage => '自動偵測';
+
+  @override
+  String get googleJapanese => '日文';
+
+  @override
+  String get googleKorean => '韓文';
+
+  @override
+  String get googleEnterText => '請輸入要翻譯的文字。';
+
+  @override
+  String get googleConfigureFirst => '請先設定 Google 翻譯 API key。';
+
+  @override
+  String get googleApiKeyInvalid => 'API key 無效或未獲授權，請到設定更新。';
+
+  @override
+  String get googleTranslationFailed => '翻譯失敗';
+
+  @override
+  String get googleOpenSettings => '前往設定';
 }

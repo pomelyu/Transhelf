@@ -3,16 +3,21 @@ import 'package:forui/forui.dart';
 
 import '../l10n/generated/app_localizations.dart';
 import '../ui/app_palette.dart';
+import 'translator_settings_view.dart';
 
 class SettingView extends StatelessWidget {
   const SettingView({
     super.key,
     required this.locale,
     required this.onLocaleChanged,
+    required this.googleApiKey,
+    required this.onGoogleApiKeyChanged,
   });
 
   final Locale locale;
   final ValueChanged<Locale> onLocaleChanged;
+  final String googleApiKey;
+  final Future<void> Function(String) onGoogleApiKeyChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -55,12 +60,18 @@ class SettingView extends StatelessWidget {
             intrinsicWidth: true,
             children: [
               FTile(
+                key: const ValueKey('google_settings'),
                 title: Text(l10n.settingsTranslator),
                 subtitle: Text(l10n.settingsTranslatorSubtitle),
                 prefix: const Icon(FLucideIcons.cloud, color: AppPalette.blue),
-                suffix: Text(
-                  l10n.settingsComingSoon,
-                  style: const TextStyle(fontSize: 11, color: AppPalette.muted),
+                suffix: const Icon(FLucideIcons.chevronRight, size: 16),
+                onPress: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => TranslatorSettingsView(
+                      apiKey: googleApiKey,
+                      onApiKeyChanged: onGoogleApiKeyChanged,
+                    ),
+                  ),
                 ),
               ),
               FTile(

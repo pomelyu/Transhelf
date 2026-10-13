@@ -109,4 +109,69 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get languageEnglish => 'English';
+
+  @override
+  String get googleTranslateName => 'Google Translate';
+
+  @override
+  String get googleConfigured => 'Configured';
+
+  @override
+  String get googleNotConfigured => 'Not set';
+
+  @override
+  String get googlePending => 'Pending';
+
+  @override
+  String get googleApiKeyHint => 'Enter API key';
+
+  @override
+  String get googleApiKeySaved => 'API key saved';
+
+  @override
+  String get googleApiKeySaveFailed => 'Could not save API key';
+
+  @override
+  String get googleShowApiKey => 'Show API key';
+
+  @override
+  String get googleHideApiKey => 'Hide API key';
+
+  @override
+  String get googleEditApiKey => 'Edit API key';
+
+  @override
+  String get googleServiceTip =>
+      'Google Translate detects the source language automatically and works well for general text.';
+
+  @override
+  String get googleSaveSettings => 'Save settings';
+
+  @override
+  String get googlePresetUnavailable => 'Not supported';
+
+  @override
+  String get googleDetectLanguage => 'Detect language';
+
+  @override
+  String get googleJapanese => 'Japanese';
+
+  @override
+  String get googleKorean => 'Korean';
+
+  @override
+  String get googleEnterText => 'Enter text to translate.';
+
+  @override
+  String get googleConfigureFirst => 'Set your Google Translate API key first.';
+
+  @override
+  String get googleApiKeyInvalid =>
+      'API key is invalid or unauthorized. Update it in Settings.';
+
+  @override
+  String get googleTranslationFailed => 'Translation failed';
+
+  @override
+  String get googleOpenSettings => 'Open settings';
 }
