@@ -150,6 +150,7 @@ class SettingView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
+              key: const ValueKey('language_option.zh'),
               title: Text(l10n.languageTraditionalChinese),
               trailing: locale.languageCode == 'zh'
                   ? const Icon(FLucideIcons.check, color: AppPalette.cyan)
@@ -164,6 +165,7 @@ class SettingView extends StatelessWidget {
               ),
             ),
             ListTile(
+              key: const ValueKey('language_option.en'),
               title: Text(l10n.languageEnglish),
               trailing: locale.languageCode == 'en'
                   ? const Icon(FLucideIcons.check, color: AppPalette.cyan)

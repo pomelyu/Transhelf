@@ -101,14 +101,17 @@ class _MainShellState extends State<MainShell> {
         onChange: (index) => setState(() => _index = index),
         children: [
           FBottomNavigationBarItem(
+            key: const ValueKey('nav.translate'),
             icon: const Icon(FLucideIcons.languages),
             label: Text(l10n.navTranslate),
           ),
           FBottomNavigationBarItem(
+            key: const ValueKey('nav.shelf'),
             icon: const Icon(FLucideIcons.bookOpen),
             label: Text(l10n.navShelf),
           ),
           FBottomNavigationBarItem(
+            key: const ValueKey('nav.settings'),
             icon: const Icon(FLucideIcons.settings),
             label: Text(l10n.navSettings),
           ),
@@ -117,9 +120,10 @@ class _MainShellState extends State<MainShell> {
       child: IndexedStack(
         index: _index,
         children: [
-          const TranslateView(),
-          const ShelfView(),
+          const TranslateView(key: ValueKey('view.translate')),
+          const ShelfView(key: ValueKey('view.shelf')),
           SettingView(
+            key: const ValueKey('view.settings'),
             locale: widget.locale,
             onLocaleChanged: widget.onLocaleChanged,
           ),

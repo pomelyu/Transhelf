@@ -13,31 +13,34 @@ void main() {
     final preferences = await SharedPreferences.getInstance();
     await tester.pumpWidget(TranshelfApp(preferences: preferences));
 
-    expect(find.text('翻譯結果會顯示於此'), findsOneWidget);
-    await tester.tap(find.text('文章').last);
+    expect(find.byKey(const ValueKey('view.translate')), findsOneWidget);
+    expect(find.byKey(const ValueKey('nav.translate')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('nav.shelf')));
     await tester.pump(const Duration(milliseconds: 200));
-    expect(find.text('還沒有文章'), findsOneWidget);
-    await tester.tap(find.text('設定').last);
+    expect(find.byKey(const ValueKey('view.shelf')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('nav.settings')));
     await tester.pump(const Duration(milliseconds: 200));
+    expect(find.byKey(const ValueKey('view.settings')), findsOneWidget);
     await tester.tap(find.byKey(const Key('language_setting')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('English').last);
+    await tester.tap(find.byKey(const ValueKey('language_option.en')));
     await tester.pumpAndSettle();
 
+    // These assertions intentionally verify localized output, not element identity.
     expect(find.text('Settings'), findsWidgets);
     expect(find.text('Translate'), findsWidgets);
     expect(preferences.getString('app_locale'), 'en');
 
     await tester.tap(find.byKey(const Key('language_setting')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('繁體中文').last);
+    await tester.tap(find.byKey(const ValueKey('language_option.zh')));
     await tester.pumpAndSettle();
     expect(find.text('設定'), findsWidgets);
     expect(preferences.getString('app_locale'), 'zh');
 
     await tester.pumpWidget(const SizedBox());
     await tester.pumpWidget(TranshelfApp(preferences: preferences));
-    expect(find.text('翻譯結果會顯示於此'), findsOneWidget);
+    expect(find.byKey(const ValueKey('view.translate')), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 200));
   });
 }
