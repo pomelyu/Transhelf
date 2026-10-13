@@ -28,3 +28,6 @@ Transhelf 是一個翻譯的手機應用，它可以將使用者輸入的文字�
 # Tech Stack
 - 使用 Dart + Flutter 開發，UI 框架用 Forui
 
+# Development
+- 只對程式邏輯和 UI routing 作測試。禁止元件動畫、位置、顏色外觀等的測試
+- 禁止利用匹配固定文字來測試。改為匹配特定大元件的 key
