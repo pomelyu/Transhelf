@@ -1,0 +1,332 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart' as intl;
+
+import 'app_localizations_en.dart';
+import 'app_localizations_zh.dart';
+
+// ignore_for_file: type=lint
+
+/// Callers can lookup localized strings with an instance of AppLocalizations
+/// returned by `AppLocalizations.of(context)`.
+///
+/// Applications need to include `AppLocalizations.delegate()` in their app's
+/// `localizationDelegates` list, and the locales they support in the app's
+/// `supportedLocales` list. For example:
+///
+/// ```dart
+/// import 'generated/app_localizations.dart';
+///
+/// return MaterialApp(
+///   localizationsDelegates: AppLocalizations.localizationsDelegates,
+///   supportedLocales: AppLocalizations.supportedLocales,
+///   home: MyApplicationHome(),
+/// );
+/// ```
+///
+/// ## Update pubspec.yaml
+///
+/// Please make sure to update your pubspec.yaml to include the following
+/// packages:
+///
+/// ```yaml
+/// dependencies:
+///   # Internationalization support.
+///   flutter_localizations:
+///     sdk: flutter
+///   intl: any # Use the pinned version from flutter_localizations
+///
+///   # Rest of dependencies
+/// ```
+///
+/// ## iOS Applications
+///
+/// iOS applications define key application metadata, including supported
+/// locales, in an Info.plist file that is built into the application bundle.
+/// To configure the locales supported by your app, you’ll need to edit this
+/// file.
+///
+/// First, open your project’s ios/Runner.xcworkspace Xcode workspace file.
+/// Then, in the Project Navigator, open the Info.plist file under the Runner
+/// project’s Runner folder.
+///
+/// Next, select the Information Property List item, select Add Item from the
+/// Editor menu, then select Localizations from the pop-up menu.
+///
+/// Select and expand the newly-created Localizations item then, for each
+/// locale your application supports, add a new item and select the locale
+/// you wish to add from the pop-up menu in the Value field. This list should
+/// be consistent with the languages listed in the AppLocalizations.supportedLocales
+/// property.
+abstract class AppLocalizations {
+  AppLocalizations(String locale)
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+
+  final String localeName;
+
+  static AppLocalizations? of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations);
+  }
+
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
+
+  /// A list of this localizations delegate along with the default localizations
+  /// delegates.
+  ///
+  /// Returns a list of localizations delegates containing this delegate along with
+  /// GlobalMaterialLocalizations.delegate, GlobalCupertinoLocalizations.delegate,
+  /// and GlobalWidgetsLocalizations.delegate.
+  ///
+  /// Additional delegates can be added by appending to this list in
+  /// MaterialApp. This list does not have to be used at all if a custom list
+  /// of delegates is preferred or required.
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
+
+  /// A list of this localizations delegate's supported locales.
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('en'),
+    Locale('zh'),
+  ];
+
+  /// No description provided for @navTranslate.
+  ///
+  /// In zh, this message translates to:
+  /// **'翻譯'**
+  String get navTranslate;
+
+  /// No description provided for @navShelf.
+  ///
+  /// In zh, this message translates to:
+  /// **'文章'**
+  String get navShelf;
+
+  /// No description provided for @navSettings.
+  ///
+  /// In zh, this message translates to:
+  /// **'設定'**
+  String get navSettings;
+
+  /// No description provided for @translateEngine.
+  ///
+  /// In zh, this message translates to:
+  /// **'引擎'**
+  String get translateEngine;
+
+  /// No description provided for @translatePreset.
+  ///
+  /// In zh, this message translates to:
+  /// **'Preset'**
+  String get translatePreset;
+
+  /// No description provided for @translateSource.
+  ///
+  /// In zh, this message translates to:
+  /// **'原文'**
+  String get translateSource;
+
+  /// No description provided for @translateResult.
+  ///
+  /// In zh, this message translates to:
+  /// **'翻譯'**
+  String get translateResult;
+
+  /// No description provided for @translateFromLanguage.
+  ///
+  /// In zh, this message translates to:
+  /// **'英文'**
+  String get translateFromLanguage;
+
+  /// No description provided for @translateToLanguage.
+  ///
+  /// In zh, this message translates to:
+  /// **'繁體中文'**
+  String get translateToLanguage;
+
+  /// No description provided for @translatePresetName.
+  ///
+  /// In zh, this message translates to:
+  /// **'技術文章'**
+  String get translatePresetName;
+
+  /// No description provided for @translateInputHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'輸入要翻譯的文字'**
+  String get translateInputHint;
+
+  /// No description provided for @translateOutputHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'翻譯結果會顯示於此'**
+  String get translateOutputHint;
+
+  /// No description provided for @translateStart.
+  ///
+  /// In zh, this message translates to:
+  /// **'開始翻譯'**
+  String get translateStart;
+
+  /// No description provided for @translateSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'儲存文章'**
+  String get translateSave;
+
+  /// No description provided for @shelfSearchHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜尋文章'**
+  String get shelfSearchHint;
+
+  /// No description provided for @shelfSortRecent.
+  ///
+  /// In zh, this message translates to:
+  /// **'最近加入'**
+  String get shelfSortRecent;
+
+  /// No description provided for @shelfShowPrivate.
+  ///
+  /// In zh, this message translates to:
+  /// **'顯示私密'**
+  String get shelfShowPrivate;
+
+  /// No description provided for @shelfEmptyTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'還沒有文章'**
+  String get shelfEmptyTitle;
+
+  /// No description provided for @shelfEmptyDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'翻譯並儲存文章後，就能在這裡閱讀。'**
+  String get shelfEmptyDescription;
+
+  /// No description provided for @settingsTagline.
+  ///
+  /// In zh, this message translates to:
+  /// **'翻譯 × 書架，把好的內容留在手邊。'**
+  String get settingsTagline;
+
+  /// No description provided for @settingsTranslationSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'翻譯'**
+  String get settingsTranslationSection;
+
+  /// No description provided for @settingsTranslator.
+  ///
+  /// In zh, this message translates to:
+  /// **'Translator 設定'**
+  String get settingsTranslator;
+
+  /// No description provided for @settingsTranslatorSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'設定翻譯服務與 API Key'**
+  String get settingsTranslatorSubtitle;
+
+  /// No description provided for @settingsPresets.
+  ///
+  /// In zh, this message translates to:
+  /// **'Preset 管理'**
+  String get settingsPresets;
+
+  /// No description provided for @settingsPresetsSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'建立並整理翻譯提示'**
+  String get settingsPresetsSubtitle;
+
+  /// No description provided for @settingsLanguageSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'語言'**
+  String get settingsLanguageSection;
+
+  /// No description provided for @settingsAppLanguage.
+  ///
+  /// In zh, this message translates to:
+  /// **'介面語言'**
+  String get settingsAppLanguage;
+
+  /// No description provided for @settingsPrivacySection.
+  ///
+  /// In zh, this message translates to:
+  /// **'隱私'**
+  String get settingsPrivacySection;
+
+  /// No description provided for @settingsAutosave.
+  ///
+  /// In zh, this message translates to:
+  /// **'自動儲存翻譯'**
+  String get settingsAutosave;
+
+  /// No description provided for @settingsPrivatePin.
+  ///
+  /// In zh, this message translates to:
+  /// **'私密文章 PIN'**
+  String get settingsPrivatePin;
+
+  /// No description provided for @settingsComingSoon.
+  ///
+  /// In zh, this message translates to:
+  /// **'即將推出'**
+  String get settingsComingSoon;
+
+  /// No description provided for @languageTraditionalChinese.
+  ///
+  /// In zh, this message translates to:
+  /// **'繁體中文'**
+  String get languageTraditionalChinese;
+
+  /// No description provided for @languageEnglish.
+  ///
+  /// In zh, this message translates to:
+  /// **'English'**
+  String get languageEnglish;
+}
+
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
+  const _AppLocalizationsDelegate();
+
+  @override
+  Future<AppLocalizations> load(Locale locale) {
+    return SynchronousFuture<AppLocalizations>(lookupAppLocalizations(locale));
+  }
+
+  @override
+  bool isSupported(Locale locale) =>
+      <String>['en', 'zh'].contains(locale.languageCode);
+
+  @override
+  bool shouldReload(_AppLocalizationsDelegate old) => false;
+}
+
+AppLocalizations lookupAppLocalizations(Locale locale) {
+  // Lookup logic when only language code is specified.
+  switch (locale.languageCode) {
+    case 'en':
+      return AppLocalizationsEn();
+    case 'zh':
+      return AppLocalizationsZh();
+  }
+
+  throw FlutterError(
+    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.',
+  );
+}
