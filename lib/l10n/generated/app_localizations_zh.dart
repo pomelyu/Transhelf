@@ -52,6 +52,80 @@ class AppLocalizationsZh extends AppLocalizations {
   String get translateSave => '儲存文章';
 
   @override
+  String get articleTitle => '文章標題';
+
+  @override
+  String get articleTitleHint => '請輸入文章標題';
+
+  @override
+  String get articleSaveToShelf => '儲存至書架';
+
+  @override
+  String get articleSaved => '文章已儲存至書架';
+
+  @override
+  String get articleSaveFailed => '無法儲存文章';
+
+  @override
+  String get articleDelete => '刪除';
+
+  @override
+  String get articleDeleteConfirm => '確定刪除這篇文章？';
+
+  @override
+  String get articleDeleteFailed => '無法刪除文章';
+
+  @override
+  String get articleCancel => '取消';
+
+  @override
+  String get articleNoResults => '沒有符合的文章';
+
+  @override
+  String articleReadPercent(int percent) {
+    return '已閱讀 $percent%';
+  }
+
+  @override
+  String get shelfSortOldest => '最早加入';
+
+  @override
+  String get shelfSortProgress => '閱讀進度';
+
+  @override
+  String get shelfSortTitle => '標題';
+
+  @override
+  String get readerBack => '返回';
+
+  @override
+  String get readerSettings => '閱讀設定';
+
+  @override
+  String get readerTranslation => '譯文';
+
+  @override
+  String get readerSource => '原文';
+
+  @override
+  String get readerBoth => '對照';
+
+  @override
+  String get readerTextSize => '文字大小';
+
+  @override
+  String get readerSmall => '小';
+
+  @override
+  String get readerMedium => '中';
+
+  @override
+  String get readerLarge => '大';
+
+  @override
+  String get readerRelaxedSpacing => '寬鬆行距';
+
+  @override
   String get shelfSearchHint => '搜尋文章';
 
   @override

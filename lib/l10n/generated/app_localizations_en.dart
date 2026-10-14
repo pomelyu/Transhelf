@@ -52,6 +52,80 @@ class AppLocalizationsEn extends AppLocalizations {
   String get translateSave => 'Save article';
 
   @override
+  String get articleTitle => 'Article title';
+
+  @override
+  String get articleTitleHint => 'Enter an article title';
+
+  @override
+  String get articleSaveToShelf => 'Save to shelf';
+
+  @override
+  String get articleSaved => 'Article saved to shelf';
+
+  @override
+  String get articleSaveFailed => 'Could not save article';
+
+  @override
+  String get articleDelete => 'Delete';
+
+  @override
+  String get articleDeleteConfirm => 'Delete this article?';
+
+  @override
+  String get articleDeleteFailed => 'Could not delete article';
+
+  @override
+  String get articleCancel => 'Cancel';
+
+  @override
+  String get articleNoResults => 'No matching articles';
+
+  @override
+  String articleReadPercent(int percent) {
+    return '$percent% read';
+  }
+
+  @override
+  String get shelfSortOldest => 'Oldest first';
+
+  @override
+  String get shelfSortProgress => 'Reading progress';
+
+  @override
+  String get shelfSortTitle => 'Title';
+
+  @override
+  String get readerBack => 'Back';
+
+  @override
+  String get readerSettings => 'Reading settings';
+
+  @override
+  String get readerTranslation => 'Translation';
+
+  @override
+  String get readerSource => 'Source';
+
+  @override
+  String get readerBoth => 'Both';
+
+  @override
+  String get readerTextSize => 'Text size';
+
+  @override
+  String get readerSmall => 'Small';
+
+  @override
+  String get readerMedium => 'Medium';
+
+  @override
+  String get readerLarge => 'Large';
+
+  @override
+  String get readerRelaxedSpacing => 'Relaxed line spacing';
+
+  @override
   String get shelfSearchHint => 'Search articles';
 
   @override

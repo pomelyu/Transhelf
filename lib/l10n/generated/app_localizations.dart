@@ -182,6 +182,150 @@ abstract class AppLocalizations {
   /// **'儲存文章'**
   String get translateSave;
 
+  /// No description provided for @articleTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'文章標題'**
+  String get articleTitle;
+
+  /// No description provided for @articleTitleHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'請輸入文章標題'**
+  String get articleTitleHint;
+
+  /// No description provided for @articleSaveToShelf.
+  ///
+  /// In zh, this message translates to:
+  /// **'儲存至書架'**
+  String get articleSaveToShelf;
+
+  /// No description provided for @articleSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'文章已儲存至書架'**
+  String get articleSaved;
+
+  /// No description provided for @articleSaveFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'無法儲存文章'**
+  String get articleSaveFailed;
+
+  /// No description provided for @articleDelete.
+  ///
+  /// In zh, this message translates to:
+  /// **'刪除'**
+  String get articleDelete;
+
+  /// No description provided for @articleDeleteConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'確定刪除這篇文章？'**
+  String get articleDeleteConfirm;
+
+  /// No description provided for @articleDeleteFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'無法刪除文章'**
+  String get articleDeleteFailed;
+
+  /// No description provided for @articleCancel.
+  ///
+  /// In zh, this message translates to:
+  /// **'取消'**
+  String get articleCancel;
+
+  /// No description provided for @articleNoResults.
+  ///
+  /// In zh, this message translates to:
+  /// **'沒有符合的文章'**
+  String get articleNoResults;
+
+  /// No description provided for @articleReadPercent.
+  ///
+  /// In zh, this message translates to:
+  /// **'已閱讀 {percent}%'**
+  String articleReadPercent(int percent);
+
+  /// No description provided for @shelfSortOldest.
+  ///
+  /// In zh, this message translates to:
+  /// **'最早加入'**
+  String get shelfSortOldest;
+
+  /// No description provided for @shelfSortProgress.
+  ///
+  /// In zh, this message translates to:
+  /// **'閱讀進度'**
+  String get shelfSortProgress;
+
+  /// No description provided for @shelfSortTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'標題'**
+  String get shelfSortTitle;
+
+  /// No description provided for @readerBack.
+  ///
+  /// In zh, this message translates to:
+  /// **'返回'**
+  String get readerBack;
+
+  /// No description provided for @readerSettings.
+  ///
+  /// In zh, this message translates to:
+  /// **'閱讀設定'**
+  String get readerSettings;
+
+  /// No description provided for @readerTranslation.
+  ///
+  /// In zh, this message translates to:
+  /// **'譯文'**
+  String get readerTranslation;
+
+  /// No description provided for @readerSource.
+  ///
+  /// In zh, this message translates to:
+  /// **'原文'**
+  String get readerSource;
+
+  /// No description provided for @readerBoth.
+  ///
+  /// In zh, this message translates to:
+  /// **'對照'**
+  String get readerBoth;
+
+  /// No description provided for @readerTextSize.
+  ///
+  /// In zh, this message translates to:
+  /// **'文字大小'**
+  String get readerTextSize;
+
+  /// No description provided for @readerSmall.
+  ///
+  /// In zh, this message translates to:
+  /// **'小'**
+  String get readerSmall;
+
+  /// No description provided for @readerMedium.
+  ///
+  /// In zh, this message translates to:
+  /// **'中'**
+  String get readerMedium;
+
+  /// No description provided for @readerLarge.
+  ///
+  /// In zh, this message translates to:
+  /// **'大'**
+  String get readerLarge;
+
+  /// No description provided for @readerRelaxedSpacing.
+  ///
+  /// In zh, this message translates to:
+  /// **'寬鬆行距'**
+  String get readerRelaxedSpacing;
+
   /// No description provided for @shelfSearchHint.
   ///
   /// In zh, this message translates to:

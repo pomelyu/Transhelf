@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import '../l10n/generated/app_localizations.dart';
+import '../models/article.dart';
+import '../services/article_segmenter.dart';
 import '../services/google_translation_service.dart';
 import '../ui/app_palette.dart';
 
@@ -10,10 +12,14 @@ class TranslateView extends StatefulWidget {
     super.key,
     required this.apiKey,
     required this.onOpenSettings,
+    required this.onSaveArticle,
+    this.service,
   });
 
   final String apiKey;
   final VoidCallback onOpenSettings;
+  final Future<void> Function(Article) onSaveArticle;
+  final GoogleTranslationService? service;
 
   @override
   State<TranslateView> createState() => _TranslateViewState();
@@ -21,13 +27,15 @@ class TranslateView extends StatefulWidget {
 
 class _TranslateViewState extends State<TranslateView> {
   final _source = TextEditingController();
-  final _service = GoogleTranslationService();
+  late final GoogleTranslationService _service =
+      widget.service ?? GoogleTranslationService();
   String? _sourceLanguage;
   String _targetLanguage = 'zh-TW';
   String _result = '';
   String? _error;
   bool _busy = false;
   bool _showResult = false;
+  List<ArticleSegment> _translatedSegments = [];
 
   @override
   void dispose() {
@@ -48,17 +56,24 @@ class _TranslateViewState extends State<TranslateView> {
     setState(() {
       _busy = true;
       _error = null;
+      _translatedSegments = [];
     });
     try {
-      final result = await _service.translate(
-        text: _source.text,
-        apiKey: widget.apiKey,
-        sourceLanguage: _sourceLanguage,
-        targetLanguage: _targetLanguage,
-      );
+      final source = _source.text;
+      final segments = <ArticleSegment>[];
+      for (final part in ArticleSegmenter.split(source)) {
+        final translated = await _service.translate(
+          text: part,
+          apiKey: widget.apiKey,
+          sourceLanguage: _sourceLanguage,
+          targetLanguage: _targetLanguage,
+        );
+        segments.add(ArticleSegment(source: part, translation: translated));
+      }
       if (!mounted) return;
       setState(() {
-        _result = result;
+        _result = segments.map((part) => part.translation).join('\n\n');
+        _translatedSegments = _source.text == source ? segments : [];
         _showResult = true;
       });
     } on GoogleTranslationException catch (error) {
@@ -73,6 +88,70 @@ class _TranslateViewState extends State<TranslateView> {
       setState(() => _error = l10n.googleTranslationFailed);
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _saveArticle() async {
+    final l10n = AppLocalizations.of(context)!;
+    var draft = '';
+    final title = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, update) => AlertDialog(
+          backgroundColor: AppPalette.surface,
+          title: Text(l10n.translateSave),
+          content: TextField(
+            key: const ValueKey('article_title_input'),
+            autofocus: true,
+            maxLength: 80,
+            decoration: InputDecoration(
+              labelText: l10n.articleTitle,
+              hintText: l10n.articleTitleHint,
+            ),
+            onChanged: (value) => update(() => draft = value),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(l10n.articleCancel),
+            ),
+            FilledButton(
+              key: const ValueKey('article_save_confirm'),
+              onPressed: draft.trim().isEmpty
+                  ? null
+                  : () => Navigator.pop(dialogContext, draft.trim()),
+              child: Text(l10n.articleSaveToShelf),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (title == null || !mounted || _translatedSegments.isEmpty) return;
+    final now = DateTime.now();
+    final article = Article(
+      id: 'article_${now.microsecondsSinceEpoch}',
+      title: title,
+      createdAt: now,
+      sourceLanguage: _sourceLanguage ?? 'auto',
+      targetLanguage: _targetLanguage,
+      service: 'google',
+      segments: List.of(_translatedSegments),
+    );
+    try {
+      await widget.onSaveArticle(article);
+      if (mounted) {
+        setState(() {
+          _result = '';
+          _translatedSegments = [];
+        });
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.articleSaved)));
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.articleSaveFailed)));
+      }
     }
   }
 
@@ -107,6 +186,7 @@ class _TranslateViewState extends State<TranslateView> {
     );
     if (picked == null) return;
     setState(() {
+      _translatedSegments = [];
       if (source) {
         _sourceLanguage = picked == 'auto' ? null : picked;
       } else {
@@ -219,6 +299,7 @@ class _TranslateViewState extends State<TranslateView> {
                                   _result.isEmpty
                                       ? l10n.translateOutputHint
                                       : _result,
+                                  key: const ValueKey('translate_output'),
                                   style: TextStyle(
                                     color: _result.isEmpty
                                         ? AppPalette.muted
@@ -230,6 +311,8 @@ class _TranslateViewState extends State<TranslateView> {
                             : TextField(
                                 key: const ValueKey('translate_input'),
                                 controller: _source,
+                                onChanged: (_) =>
+                                    setState(() => _translatedSegments = []),
                                 maxLines: null,
                                 expands: true,
                                 textAlignVertical: TextAlignVertical.top,
@@ -273,7 +356,10 @@ class _TranslateViewState extends State<TranslateView> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: null,
+                      key: const ValueKey('save_article_button'),
+                      onPressed: _busy || _translatedSegments.isEmpty
+                          ? null
+                          : _saveArticle,
                       child: Text(l10n.translateSave),
                     ),
                   ),

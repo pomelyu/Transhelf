@@ -5,7 +5,11 @@ import 'package:forui/forui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'l10n/generated/app_localizations.dart';
+import 'models/article.dart';
+import 'services/article_store.dart';
+import 'services/google_translation_service.dart';
 import 'ui/app_palette.dart';
+import 'views/reading_view.dart';
 import 'views/setting_view.dart';
 import 'views/shelf_view.dart';
 import 'views/translate_view.dart';
@@ -18,10 +22,18 @@ Future<void> main() async {
 }
 
 class TranshelfApp extends StatefulWidget {
-  const TranshelfApp({super.key, this.preferences, this.initialApiKey = ''});
+  const TranshelfApp({
+    super.key,
+    this.preferences,
+    this.initialApiKey = '',
+    this.articleStore,
+    this.translationService,
+  });
 
   final SharedPreferences? preferences;
   final String initialApiKey;
+  final ArticleStore? articleStore;
+  final GoogleTranslationService? translationService;
 
   @override
   State<TranshelfApp> createState() => _TranshelfAppState();
@@ -70,11 +82,15 @@ class _TranshelfAppState extends State<TranshelfApp> {
         Locale('en'),
       ],
       builder: (context, child) => FTheme(data: theme, child: child!),
-      home: MainShell(
-        locale: _locale,
-        onLocaleChanged: _changeLocale,
-        googleApiKey: _googleApiKey,
-        onGoogleApiKeyChanged: _changeGoogleApiKey,
+      home: Scaffold(
+        body: MainShell(
+          locale: _locale,
+          onLocaleChanged: _changeLocale,
+          googleApiKey: _googleApiKey,
+          onGoogleApiKeyChanged: _changeGoogleApiKey,
+          articleStore: widget.articleStore,
+          translationService: widget.translationService,
+        ),
       ),
     );
   }
@@ -87,12 +103,16 @@ class MainShell extends StatefulWidget {
     required this.onLocaleChanged,
     required this.googleApiKey,
     required this.onGoogleApiKeyChanged,
+    this.articleStore,
+    this.translationService,
   });
 
   final Locale locale;
   final ValueChanged<Locale> onLocaleChanged;
   final String googleApiKey;
   final Future<void> Function(String) onGoogleApiKeyChanged;
+  final ArticleStore? articleStore;
+  final GoogleTranslationService? translationService;
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -100,6 +120,70 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _index = 0;
+  late final ArticleStore _articleStore = widget.articleStore ?? ArticleStore();
+  List<Article> _articles = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadArticles();
+  }
+
+  Future<void> _loadArticles() async {
+    try {
+      final articles = await _articleStore.load();
+      if (mounted) {
+        setState(() {
+          final currentIds = _articles.map((article) => article.id).toSet();
+          _articles = [
+            ...articles.where((article) => !currentIds.contains(article.id)),
+            ..._articles,
+          ];
+        });
+      }
+    } catch (_) {
+      // The shelf remains available if local storage cannot be read.
+    }
+  }
+
+  Future<void> _saveArticle(Article article) async {
+    await _articleStore.save(article);
+    if (mounted) setState(() => _articles = [..._articles, article]);
+  }
+
+  Future<void> _deleteArticle(Article article) async {
+    await _articleStore.delete(article.id);
+    if (mounted) {
+      setState(
+        () => _articles = _articles
+            .where((item) => item.id != article.id)
+            .toList(),
+      );
+    }
+  }
+
+  Future<void> _saveProgress(Article article, double progress) async {
+    final updated = article.withProgress(progress);
+    await _articleStore.save(updated);
+    if (mounted) {
+      setState(
+        () => _articles = _articles
+            .map((item) => item.id == updated.id ? updated : item)
+            .toList(),
+      );
+    }
+  }
+
+  void _openArticle(Article article) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ReadingView(
+          article: article,
+          onProgress: (progress) => _saveProgress(article, progress),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -141,8 +225,15 @@ class _MainShellState extends State<MainShell> {
             key: const ValueKey('view.translate'),
             apiKey: widget.googleApiKey,
             onOpenSettings: () => setState(() => _index = 2),
+            onSaveArticle: _saveArticle,
+            service: widget.translationService,
           ),
-          const ShelfView(key: ValueKey('view.shelf')),
+          ShelfView(
+            key: const ValueKey('view.shelf'),
+            articles: _articles,
+            onOpen: _openArticle,
+            onDelete: _deleteArticle,
+          ),
           SettingView(
             key: const ValueKey('view.settings'),
             locale: widget.locale,
