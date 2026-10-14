@@ -140,24 +140,6 @@ abstract class AppLocalizations {
   /// **'翻譯'**
   String get translateResult;
 
-  /// No description provided for @translateFromLanguage.
-  ///
-  /// In zh, this message translates to:
-  /// **'英文'**
-  String get translateFromLanguage;
-
-  /// No description provided for @translateToLanguage.
-  ///
-  /// In zh, this message translates to:
-  /// **'繁體中文'**
-  String get translateToLanguage;
-
-  /// No description provided for @translatePresetName.
-  ///
-  /// In zh, this message translates to:
-  /// **'技術文章'**
-  String get translatePresetName;
-
   /// No description provided for @translateInputHint.
   ///
   /// In zh, this message translates to:

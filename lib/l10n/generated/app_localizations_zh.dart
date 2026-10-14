@@ -31,15 +31,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get translateResult => '翻譯';
 
   @override
-  String get translateFromLanguage => '英文';
-
-  @override
-  String get translateToLanguage => '繁體中文';
-
-  @override
-  String get translatePresetName => '技術文章';
-
-  @override
   String get translateInputHint => '輸入要翻譯的文字';
 
   @override

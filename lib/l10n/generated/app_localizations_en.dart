@@ -31,15 +31,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get translateResult => 'Translation';
 
   @override
-  String get translateFromLanguage => 'English';
-
-  @override
-  String get translateToLanguage => 'Traditional Chinese';
-
-  @override
-  String get translatePresetName => 'Technical Writing';
-
-  @override
   String get translateInputHint => 'Enter text to translate';
 
   @override
