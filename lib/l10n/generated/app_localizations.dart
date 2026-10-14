@@ -182,6 +182,48 @@ abstract class AppLocalizations {
   /// **'儲存文章'**
   String get translateSave;
 
+  /// No description provided for @translateCharacters.
+  ///
+  /// In zh, this message translates to:
+  /// **'字元'**
+  String get translateCharacters;
+
+  /// No description provided for @translateClearSource.
+  ///
+  /// In zh, this message translates to:
+  /// **'清除原文'**
+  String get translateClearSource;
+
+  /// No description provided for @translateCopy.
+  ///
+  /// In zh, this message translates to:
+  /// **'複製翻譯'**
+  String get translateCopy;
+
+  /// No description provided for @translateCopied.
+  ///
+  /// In zh, this message translates to:
+  /// **'已複製翻譯'**
+  String get translateCopied;
+
+  /// No description provided for @translateAgain.
+  ///
+  /// In zh, this message translates to:
+  /// **'重新翻譯'**
+  String get translateAgain;
+
+  /// No description provided for @translateEdit.
+  ///
+  /// In zh, this message translates to:
+  /// **'編輯譯文'**
+  String get translateEdit;
+
+  /// No description provided for @translateFinishEditing.
+  ///
+  /// In zh, this message translates to:
+  /// **'完成編輯'**
+  String get translateFinishEditing;
+
   /// No description provided for @articleTitle.
   ///
   /// In zh, this message translates to:

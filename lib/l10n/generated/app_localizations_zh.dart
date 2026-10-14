@@ -52,6 +52,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get translateSave => '儲存文章';
 
   @override
+  String get translateCharacters => '字元';
+
+  @override
+  String get translateClearSource => '清除原文';
+
+  @override
+  String get translateCopy => '複製翻譯';
+
+  @override
+  String get translateCopied => '已複製翻譯';
+
+  @override
+  String get translateAgain => '重新翻譯';
+
+  @override
+  String get translateEdit => '編輯譯文';
+
+  @override
+  String get translateFinishEditing => '完成編輯';
+
+  @override
   String get articleTitle => '文章標題';
 
   @override

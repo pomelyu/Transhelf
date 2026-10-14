@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transhelf/main.dart';
-import 'package:transhelf/l10n/generated/app_localizations.dart';
 import 'package:transhelf/models/article.dart';
 import 'package:transhelf/services/article_store.dart';
 import 'package:transhelf/services/google_translation_service.dart';
@@ -45,9 +44,39 @@ void main() {
       find.byKey(const ValueKey('translate_input')),
       'This sentence has enough letters.',
     );
+    expect(find.byKey(const ValueKey('save_article_button')), findsNothing);
     tester.testTextInput.hide();
     await tester.tap(find.byKey(const ValueKey('translate_button')));
     await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('translate_button')), findsNothing);
+    expect(find.byKey(const ValueKey('save_article_button')), findsOneWidget);
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const ValueKey('translate_output')))
+          .enabled,
+      isFalse,
+    );
+    await tester.tap(find.byKey(const ValueKey('edit_translation_button')));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const ValueKey('translate_output')))
+          .enabled,
+      isTrue,
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('translate_output')),
+      '手動修訂的譯文。',
+    );
+    tester.testTextInput.hide();
+    await tester.tap(find.byKey(const ValueKey('edit_translation_button')));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const ValueKey('translate_output')))
+          .enabled,
+      isFalse,
+    );
     await tester.tap(find.byKey(const ValueKey('save_article_button')));
     await tester.pumpAndSettle();
     await tester.enterText(
@@ -58,20 +87,18 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('article_save_confirm')));
     await tester.pumpAndSettle();
 
+    final input = find.byKey(const ValueKey('translate_input'));
+    expect(input, findsOneWidget);
+    expect(tester.widget<TextField>(input).controller!.text, isEmpty);
+    expect(find.byKey(const ValueKey('save_article_button')), findsNothing);
+    expect(find.byKey(const ValueKey('translate_button')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('translate_result_tab')));
+    await tester.pumpAndSettle();
     final output = find.byKey(const ValueKey('translate_output'));
-    final l10n = AppLocalizations.of(tester.element(output))!;
-    expect(
-      tester.widget<SelectableText>(output).data,
-      l10n.translateOutputHint,
-    );
-    expect(
-      tester
-          .widget<OutlinedButton>(
-            find.byKey(const ValueKey('save_article_button')),
-          )
-          .onPressed,
-      isNull,
-    );
+    expect(tester.widget<TextField>(output).controller!.text, isEmpty);
+    await tester.tap(find.byKey(const ValueKey('translate_source_tab')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('translate_input')), findsOneWidget);
 
     final articles = await store.load();
     expect(articles, hasLength(1));
@@ -79,7 +106,7 @@ void main() {
       articles.single.segments.single.source,
       'This sentence has enough letters.',
     );
-    expect(articles.single.segments.single.translation, '這是譯文。');
+    expect(articles.single.segments.single.translation, '手動修訂的譯文。');
     expect(articles.single.isPrivate, isFalse);
 
     await tester.pump(const Duration(seconds: 5));
@@ -109,6 +136,65 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('article_delete_confirm')));
     await tester.pumpAndSettle();
     expect(await store.load(), isEmpty);
+  });
+
+  testWidgets('clearing source resets the translated action state', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(402, 874);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    SharedPreferences.setMockInitialValues({});
+    final preferences = await SharedPreferences.getInstance();
+    var requests = 0;
+    final service = GoogleTranslationService(
+      post: (_, _) async {
+        requests++;
+        return (
+          200,
+          jsonEncode({
+            'data': {
+              'translations': [
+                {'translatedText': '這是譯文。'},
+              ],
+            },
+          }),
+        );
+      },
+    );
+    await tester.pumpWidget(
+      TranshelfApp(
+        preferences: preferences,
+        initialApiKey: 'test-key',
+        articleStore: _MemoryArticleStore(),
+        translationService: service,
+      ),
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('translate_input')),
+      'This sentence has enough letters.',
+    );
+    tester.testTextInput.hide();
+    await tester.tap(find.byKey(const ValueKey('translate_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('retranslate_button')));
+    await tester.pumpAndSettle();
+    expect(requests, 2);
+    await tester.tap(find.text('原文').first);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('save_article_button')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('clear_source_button')));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const ValueKey('translate_input')))
+          .controller!
+          .text,
+      isEmpty,
+    );
+    expect(find.byKey(const ValueKey('save_article_button')), findsNothing);
+    expect(find.byKey(const ValueKey('translate_button')), findsOneWidget);
   });
 
   testWidgets('reader saves scroll progress when returning to shelf', (

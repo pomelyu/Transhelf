@@ -52,6 +52,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get translateSave => 'Save article';
 
   @override
+  String get translateCharacters => 'characters';
+
+  @override
+  String get translateClearSource => 'Clear source';
+
+  @override
+  String get translateCopy => 'Copy translation';
+
+  @override
+  String get translateCopied => 'Translation copied';
+
+  @override
+  String get translateAgain => 'Translate again';
+
+  @override
+  String get translateEdit => 'Edit translation';
+
+  @override
+  String get translateFinishEditing => 'Finish editing';
+
+  @override
   String get articleTitle => 'Article title';
 
   @override
