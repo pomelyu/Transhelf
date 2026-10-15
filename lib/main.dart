@@ -6,10 +6,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'l10n/generated/app_localizations.dart';
 import 'models/article.dart';
+import 'models/translation_preset.dart';
 import 'services/article_store.dart';
 import 'services/google_translation_service.dart';
+import 'services/preset_store.dart';
 import 'ui/app_palette.dart';
 import 'views/reading_view.dart';
+import 'views/preset_list_view.dart';
 import 'views/setting_view.dart';
 import 'views/shelf_view.dart';
 import 'views/translate_view.dart';
@@ -90,6 +93,7 @@ class _TranshelfAppState extends State<TranshelfApp> {
           onGoogleApiKeyChanged: _changeGoogleApiKey,
           articleStore: widget.articleStore,
           translationService: widget.translationService,
+          preferences: widget.preferences,
         ),
       ),
     );
@@ -105,6 +109,7 @@ class MainShell extends StatefulWidget {
     required this.onGoogleApiKeyChanged,
     this.articleStore,
     this.translationService,
+    this.preferences,
   });
 
   final Locale locale;
@@ -113,6 +118,7 @@ class MainShell extends StatefulWidget {
   final Future<void> Function(String) onGoogleApiKeyChanged;
   final ArticleStore? articleStore;
   final GoogleTranslationService? translationService;
+  final SharedPreferences? preferences;
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -121,6 +127,7 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _index = 0;
   late final ArticleStore _articleStore = widget.articleStore ?? ArticleStore();
+  late final PresetStore _presetStore = PresetStore(widget.preferences);
   List<Article> _articles = [];
 
   @override
@@ -172,6 +179,23 @@ class _MainShellState extends State<MainShell> {
             .toList(),
       );
     }
+  }
+
+  Future<void> _savePresetLibrary(PresetLibrarySnapshot library) async {
+    await _presetStore.save(library);
+  }
+
+  Future<void> _openPresetManager() async {
+    final library = await _presetStore.load();
+    if (!mounted) return;
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => PresetListView(
+          library: library,
+          onLibraryChanged: _savePresetLibrary,
+        ),
+      ),
+    );
   }
 
   void _openArticle(Article article) {
@@ -240,6 +264,7 @@ class _MainShellState extends State<MainShell> {
             onLocaleChanged: widget.onLocaleChanged,
             googleApiKey: widget.googleApiKey,
             onGoogleApiKeyChanged: widget.onGoogleApiKeyChanged,
+            onOpenPresets: _openPresetManager,
           ),
         ],
       ),

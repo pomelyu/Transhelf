@@ -191,6 +191,76 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsComingSoon => 'Coming soon';
 
   @override
+  String get presetManagementTitle => 'Preset management';
+
+  @override
+  String get presetNewTitle => 'New preset';
+
+  @override
+  String get presetEditTitle => 'Edit preset';
+
+  @override
+  String get presetDefault => 'Default';
+
+  @override
+  String get presetFallbackName => 'Default translation';
+
+  @override
+  String get presetSetDefault => 'Set as default';
+
+  @override
+  String get presetCopy => 'Copy preset';
+
+  @override
+  String get presetName => 'Name';
+
+  @override
+  String get presetNameHint => 'For example: Academic papers';
+
+  @override
+  String get presetPrompt => 'Custom prompt';
+
+  @override
+  String get presetPromptHint =>
+      'Translate the article using the glossary while preserving technical terms and names.';
+
+  @override
+  String get presetGlossary => 'Custom glossary';
+
+  @override
+  String get presetAddTerm => 'Add term';
+
+  @override
+  String get presetEmptyGlossary => 'No terms added yet';
+
+  @override
+  String get presetSourceTerm => 'Source term';
+
+  @override
+  String get presetTargetTerm => 'Translated term';
+
+  @override
+  String get presetCloseSelection => 'Close';
+
+  @override
+  String get presetDeleteConfirm => 'Delete the selected items?';
+
+  @override
+  String get presetSave => 'Save preset';
+
+  @override
+  String get presetSaved => 'Preset saved';
+
+  @override
+  String get presetDeleted => 'Preset deleted';
+
+  @override
+  String get presetSaveFailed => 'Could not save preset';
+
+  @override
+  String get presetDeleteFailed => 'Could not delete preset';
+
+  @override
   String get languageTraditionalChinese => '繁體中文';
 
   @override

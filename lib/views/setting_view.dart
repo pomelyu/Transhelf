@@ -12,12 +12,14 @@ class SettingView extends StatelessWidget {
     required this.onLocaleChanged,
     required this.googleApiKey,
     required this.onGoogleApiKeyChanged,
+    required this.onOpenPresets,
   });
 
   final Locale locale;
   final ValueChanged<Locale> onLocaleChanged;
   final String googleApiKey;
   final Future<void> Function(String) onGoogleApiKeyChanged;
+  final Future<void> Function() onOpenPresets;
 
   @override
   Widget build(BuildContext context) {
@@ -75,16 +77,15 @@ class SettingView extends StatelessWidget {
                 ),
               ),
               FTile(
+                key: const ValueKey('preset_settings'),
                 title: Text(l10n.settingsPresets),
                 subtitle: Text(l10n.settingsPresetsSubtitle),
                 prefix: const Icon(
                   FLucideIcons.slidersHorizontal,
                   color: AppPalette.blue,
                 ),
-                suffix: Text(
-                  l10n.settingsComingSoon,
-                  style: const TextStyle(fontSize: 11, color: AppPalette.muted),
-                ),
+                suffix: const Icon(FLucideIcons.chevronRight, size: 16),
+                onPress: () => onOpenPresets(),
               ),
             ],
           ),

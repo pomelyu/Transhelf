@@ -189,6 +189,75 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsComingSoon => '即將推出';
 
   @override
+  String get presetManagementTitle => 'Preset 管理';
+
+  @override
+  String get presetNewTitle => '新增 Preset';
+
+  @override
+  String get presetEditTitle => '編輯 Preset';
+
+  @override
+  String get presetDefault => '預設';
+
+  @override
+  String get presetFallbackName => '預設翻譯';
+
+  @override
+  String get presetSetDefault => '設為預設';
+
+  @override
+  String get presetCopy => '複製 Preset';
+
+  @override
+  String get presetName => '名稱';
+
+  @override
+  String get presetNameHint => '例如：學術論文';
+
+  @override
+  String get presetPrompt => '自訂提示詞';
+
+  @override
+  String get presetPromptHint => '參考詞彙表翻譯文章，並保留專有名詞和人名。';
+
+  @override
+  String get presetGlossary => '自訂詞彙';
+
+  @override
+  String get presetAddTerm => '新增詞彙';
+
+  @override
+  String get presetEmptyGlossary => '尚未新增詞彙';
+
+  @override
+  String get presetSourceTerm => '原文詞彙';
+
+  @override
+  String get presetTargetTerm => '譯文詞彙';
+
+  @override
+  String get presetCloseSelection => '關閉';
+
+  @override
+  String get presetDeleteConfirm => '確定刪除選取的項目？';
+
+  @override
+  String get presetSave => '儲存 Preset';
+
+  @override
+  String get presetSaved => 'Preset 已儲存';
+
+  @override
+  String get presetDeleted => 'Preset 已刪除';
+
+  @override
+  String get presetSaveFailed => '無法儲存 Preset';
+
+  @override
+  String get presetDeleteFailed => '無法刪除 Preset';
+
+  @override
   String get languageTraditionalChinese => '繁體中文';
 
   @override

@@ -452,6 +452,144 @@ abstract class AppLocalizations {
   /// **'即將推出'**
   String get settingsComingSoon;
 
+  /// No description provided for @presetManagementTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'Preset 管理'**
+  String get presetManagementTitle;
+
+  /// No description provided for @presetNewTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'新增 Preset'**
+  String get presetNewTitle;
+
+  /// No description provided for @presetEditTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'編輯 Preset'**
+  String get presetEditTitle;
+
+  /// No description provided for @presetDefault.
+  ///
+  /// In zh, this message translates to:
+  /// **'預設'**
+  String get presetDefault;
+
+  /// No description provided for @presetFallbackName.
+  ///
+  /// In zh, this message translates to:
+  /// **'預設翻譯'**
+  String get presetFallbackName;
+
+  /// No description provided for @presetSetDefault.
+  ///
+  /// In zh, this message translates to:
+  /// **'設為預設'**
+  String get presetSetDefault;
+
+  /// No description provided for @presetCopy.
+  ///
+  /// In zh, this message translates to:
+  /// **'複製 Preset'**
+  String get presetCopy;
+
+  /// No description provided for @presetName.
+  ///
+  /// In zh, this message translates to:
+  /// **'名稱'**
+  String get presetName;
+
+  /// No description provided for @presetNameHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'例如：學術論文'**
+  String get presetNameHint;
+
+  /// No description provided for @presetPrompt.
+  ///
+  /// In zh, this message translates to:
+  /// **'自訂提示詞'**
+  String get presetPrompt;
+
+  /// No description provided for @presetPromptHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'參考詞彙表翻譯文章，並保留專有名詞和人名。'**
+  String get presetPromptHint;
+
+  /// No description provided for @presetGlossary.
+  ///
+  /// In zh, this message translates to:
+  /// **'自訂詞彙'**
+  String get presetGlossary;
+
+  /// No description provided for @presetAddTerm.
+  ///
+  /// In zh, this message translates to:
+  /// **'新增詞彙'**
+  String get presetAddTerm;
+
+  /// No description provided for @presetEmptyGlossary.
+  ///
+  /// In zh, this message translates to:
+  /// **'尚未新增詞彙'**
+  String get presetEmptyGlossary;
+
+  /// No description provided for @presetSourceTerm.
+  ///
+  /// In zh, this message translates to:
+  /// **'原文詞彙'**
+  String get presetSourceTerm;
+
+  /// No description provided for @presetTargetTerm.
+  ///
+  /// In zh, this message translates to:
+  /// **'譯文詞彙'**
+  String get presetTargetTerm;
+
+  /// No description provided for @presetCloseSelection.
+  ///
+  /// In zh, this message translates to:
+  /// **'關閉'**
+  String get presetCloseSelection;
+
+  /// No description provided for @presetDeleteConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'確定刪除選取的項目？'**
+  String get presetDeleteConfirm;
+
+  /// No description provided for @presetSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'儲存 Preset'**
+  String get presetSave;
+
+  /// No description provided for @presetSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'Preset 已儲存'**
+  String get presetSaved;
+
+  /// No description provided for @presetDeleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'Preset 已刪除'**
+  String get presetDeleted;
+
+  /// No description provided for @presetSaveFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'無法儲存 Preset'**
+  String get presetSaveFailed;
+
+  /// No description provided for @presetDeleteFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'無法刪除 Preset'**
+  String get presetDeleteFailed;
+
   /// No description provided for @languageTraditionalChinese.
   ///
   /// In zh, this message translates to:
