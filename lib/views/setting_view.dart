@@ -12,6 +12,10 @@ class SettingView extends StatelessWidget {
     required this.onLocaleChanged,
     required this.googleApiKey,
     required this.onGoogleApiKeyChanged,
+    required this.geminiApiKey,
+    required this.onGeminiApiKeyChanged,
+    required this.geminiModel,
+    required this.onGeminiModelChanged,
     required this.onOpenPresets,
   });
 
@@ -19,6 +23,10 @@ class SettingView extends StatelessWidget {
   final ValueChanged<Locale> onLocaleChanged;
   final String googleApiKey;
   final Future<void> Function(String) onGoogleApiKeyChanged;
+  final String geminiApiKey;
+  final Future<void> Function(String) onGeminiApiKeyChanged;
+  final String geminiModel;
+  final Future<void> Function(String) onGeminiModelChanged;
   final Future<void> Function() onOpenPresets;
 
   @override
@@ -72,6 +80,10 @@ class SettingView extends StatelessWidget {
                     builder: (_) => TranslatorSettingsView(
                       apiKey: googleApiKey,
                       onApiKeyChanged: onGoogleApiKeyChanged,
+                      geminiApiKey: geminiApiKey,
+                      onGeminiApiKeyChanged: onGeminiApiKeyChanged,
+                      geminiModel: geminiModel,
+                      onGeminiModelChanged: onGeminiModelChanged,
                     ),
                   ),
                 ),

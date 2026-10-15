@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import '../l10n/generated/app_localizations.dart';
+import '../services/gemini_translation_service.dart';
 import '../ui/app_palette.dart';
 
 class TranslatorSettingsView extends StatefulWidget {
@@ -9,10 +10,18 @@ class TranslatorSettingsView extends StatefulWidget {
     super.key,
     required this.apiKey,
     required this.onApiKeyChanged,
+    required this.geminiApiKey,
+    required this.onGeminiApiKeyChanged,
+    required this.geminiModel,
+    required this.onGeminiModelChanged,
   });
 
   final String apiKey;
   final Future<void> Function(String) onApiKeyChanged;
+  final String geminiApiKey;
+  final Future<void> Function(String) onGeminiApiKeyChanged;
+  final String geminiModel;
+  final Future<void> Function(String) onGeminiModelChanged;
 
   @override
   State<TranslatorSettingsView> createState() => _TranslatorSettingsViewState();
@@ -20,10 +29,18 @@ class TranslatorSettingsView extends StatefulWidget {
 
 class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
   late final _controller = TextEditingController(text: widget.apiKey);
+  late final _geminiController = TextEditingController(
+    text: widget.geminiApiKey,
+  );
+  late String _selectedGeminiModel =
+      GeminiTranslationService.availableModels.contains(widget.geminiModel)
+      ? widget.geminiModel
+      : GeminiTranslationService.defaultModel;
   bool _visible = false;
   bool _saving = false;
   bool _editing = false;
   late bool _configured = widget.apiKey.isNotEmpty;
+  late bool _geminiConfigured = widget.geminiApiKey.isNotEmpty;
   String? _error;
   String? _notice;
   int _selectedService = 0;
@@ -31,12 +48,14 @@ class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
   @override
   void dispose() {
     _controller.dispose();
+    _geminiController.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
     final l10n = AppLocalizations.of(context)!;
-    final apiKey = _controller.text.trim();
+    final controller = _selectedService == 0 ? _controller : _geminiController;
+    final apiKey = controller.text.trim();
     if (apiKey.isEmpty) {
       setState(() => _error = l10n.googleApiKeyHint);
       return;
@@ -47,10 +66,18 @@ class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
       _notice = null;
     });
     try {
-      await widget.onApiKeyChanged(apiKey);
+      if (_selectedService == 0) {
+        await widget.onApiKeyChanged(apiKey);
+      } else {
+        await widget.onGeminiApiKeyChanged(apiKey);
+      }
       if (!mounted) return;
       setState(() {
-        _configured = true;
+        if (_selectedService == 0) {
+          _configured = true;
+        } else {
+          _geminiConfigured = true;
+        }
         _editing = false;
         _visible = false;
         _notice = l10n.googleApiKeySaved;
@@ -63,10 +90,31 @@ class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
     }
   }
 
+  Future<void> _selectGeminiModel(String model) async {
+    final previousModel = _selectedGeminiModel;
+    setState(() {
+      _selectedGeminiModel = model;
+      _error = null;
+      _notice = null;
+    });
+    try {
+      await widget.onGeminiModelChanged(model);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _selectedGeminiModel = previousModel;
+        _error = AppLocalizations.of(context)!.translatorModelSaveFailed;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final services = [l10n.googleTranslateName, 'Gemini', 'ChatGPT'];
+    final activeConfigured = _selectedService == 0
+        ? _configured
+        : _geminiConfigured;
     final icons = [
       FLucideIcons.languages,
       FLucideIcons.sparkles,
@@ -105,7 +153,11 @@ class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
             Row(
               children: List.generate(services.length, (index) {
                 final selected = _selectedService == index;
-                final configured = index == 0 && _configured;
+                final configured = switch (index) {
+                  0 => _configured,
+                  1 => _geminiConfigured,
+                  _ => false,
+                };
                 return Expanded(
                   child: Padding(
                     padding: EdgeInsets.only(right: index == 2 ? 0 : 7),
@@ -176,7 +228,7 @@ class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
                 border: Border.all(color: AppPalette.border),
                 borderRadius: BorderRadius.circular(17),
               ),
-              child: _selectedService == 0
+              child: _selectedService < 2
                   ? Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -184,7 +236,7 @@ class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
                           children: [
                             Expanded(
                               child: Text(
-                                l10n.googleTranslateName,
+                                services[_selectedService],
                                 style: const TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w700,
@@ -192,7 +244,7 @@ class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
                               ),
                             ),
                             _statusPill(
-                              _configured
+                              activeConfigured
                                   ? l10n.googleConfigured
                                   : l10n.googlePending,
                             ),
@@ -212,7 +264,11 @@ class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
                             ),
                             if (!_editing)
                               IconButton(
-                                key: const ValueKey('edit_google_api_key'),
+                                key: ValueKey(
+                                  _selectedService == 0
+                                      ? 'edit_google_api_key'
+                                      : 'edit_gemini_api_key',
+                                ),
                                 tooltip: l10n.googleEditApiKey,
                                 visualDensity: VisualDensity.compact,
                                 onPressed: () => setState(() {
@@ -226,8 +282,14 @@ class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
                         ),
                         const SizedBox(height: 7),
                         TextField(
-                          key: const ValueKey('google_api_key'),
-                          controller: _controller,
+                          key: ValueKey(
+                            _selectedService == 0
+                                ? 'google_api_key'
+                                : 'gemini_api_key',
+                          ),
+                          controller: _selectedService == 0
+                              ? _controller
+                              : _geminiController,
                           enabled: _editing,
                           obscureText: !_visible || !_editing,
                           autocorrect: false,
@@ -253,6 +315,60 @@ class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
                             ),
                           ),
                         ),
+                        if (_selectedService == 1) ...[
+                          const SizedBox(height: 18),
+                          Text(
+                            l10n.translatorModelLabel,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 7),
+                          SizedBox(
+                            height: 56,
+                            child: InputDecorator(
+                              key: const ValueKey(
+                                'gemini_model_selector_container',
+                              ),
+                              decoration: InputDecoration(
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(13),
+                                ),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  key: const ValueKey('gemini_model_selector'),
+                                  value: _selectedGeminiModel,
+                                  isExpanded: true,
+                                  items: [
+                                    for (final model
+                                        in GeminiTranslationService
+                                            .availableModels)
+                                      DropdownMenuItem(
+                                        value: model,
+                                        child: Text(
+                                          GeminiTranslationService
+                                                  .modelDisplayNames[model] ??
+                                              model,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                  ],
+                                  onChanged: (model) {
+                                    if (model != null) {
+                                      _selectGeminiModel(model);
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                         if (_error != null)
                           Padding(
                             padding: const EdgeInsets.only(top: 6),
@@ -276,38 +392,43 @@ class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
                             ),
                           ),
                         const SizedBox(height: 18),
-                        Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: AppPalette.surfaceRaised,
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(
-                                FLucideIcons.languages,
-                                size: 19,
-                                color: AppPalette.cyan,
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  l10n.googleServiceTip,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    height: 1.5,
-                                    color: AppPalette.muted,
+                        if (_selectedService == 0)
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: AppPalette.surfaceRaised,
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(
+                                  FLucideIcons.languages,
+                                  size: 19,
+                                  color: AppPalette.cyan,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    l10n.googleServiceTip,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      height: 1.5,
+                                      color: AppPalette.muted,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
                         if (_editing) ...[
                           const SizedBox(height: 18),
                           FilledButton(
-                            key: const ValueKey('save_google_api_key'),
+                            key: ValueKey(
+                              _selectedService == 0
+                                  ? 'save_google_api_key'
+                                  : 'save_gemini_api_key',
+                            ),
                             onPressed: _saving ? null : _save,
                             child: Text(l10n.googleSaveSettings),
                           ),

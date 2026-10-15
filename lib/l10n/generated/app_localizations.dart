@@ -644,6 +644,18 @@ abstract class AppLocalizations {
   /// **'API key 已儲存'**
   String get googleApiKeySaved;
 
+  /// No description provided for @translatorModelLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'翻譯模型'**
+  String get translatorModelLabel;
+
+  /// No description provided for @translatorModelSaveFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'無法儲存翻譯模型'**
+  String get translatorModelSaveFailed;
+
   /// No description provided for @googleApiKeySaveFailed.
   ///
   /// In zh, this message translates to:
@@ -716,6 +728,12 @@ abstract class AppLocalizations {
   /// **'請先設定 Google 翻譯 API key。'**
   String get googleConfigureFirst;
 
+  /// No description provided for @geminiConfigureFirst.
+  ///
+  /// In zh, this message translates to:
+  /// **'請先設定 Gemini API key。'**
+  String get geminiConfigureFirst;
+
   /// No description provided for @googleApiKeyInvalid.
   ///
   /// In zh, this message translates to:
@@ -727,6 +745,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'翻譯失敗'**
   String get googleTranslationFailed;
+
+  /// No description provided for @geminiTranslationFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'Gemini 翻譯失敗'**
+  String get geminiTranslationFailed;
 
   /// No description provided for @googleOpenSettings.
   ///

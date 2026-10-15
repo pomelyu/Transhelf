@@ -288,6 +288,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get googleApiKeySaved => 'API key saved';
 
   @override
+  String get translatorModelLabel => 'Translation model';
+
+  @override
+  String get translatorModelSaveFailed => 'Could not save translation model';
+
+  @override
   String get googleApiKeySaveFailed => 'Could not save API key';
 
   @override
@@ -325,11 +331,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get googleConfigureFirst => 'Set your Google Translate API key first.';
 
   @override
+  String get geminiConfigureFirst => 'Set your Gemini API key first.';
+
+  @override
   String get googleApiKeyInvalid =>
       'API key is invalid or unauthorized. Update it in Settings.';
 
   @override
   String get googleTranslationFailed => 'Translation failed';
+
+  @override
+  String get geminiTranslationFailed => 'Gemini translation failed';
 
   @override
   String get googleOpenSettings => 'Open settings';

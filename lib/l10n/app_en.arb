@@ -92,6 +92,8 @@
   "googlePending": "Pending",
   "googleApiKeyHint": "Enter API key",
   "googleApiKeySaved": "API key saved",
+  "translatorModelLabel": "Translation model",
+  "translatorModelSaveFailed": "Could not save translation model",
   "googleApiKeySaveFailed": "Could not save API key",
   "googleShowApiKey": "Show API key",
   "googleHideApiKey": "Hide API key",
@@ -104,7 +106,9 @@
   "googleKorean": "Korean",
   "googleEnterText": "Enter text to translate.",
   "googleConfigureFirst": "Set your Google Translate API key first.",
+  "geminiConfigureFirst": "Set your Gemini API key first.",
   "googleApiKeyInvalid": "API key is invalid or unauthorized. Update it in Settings.",
   "googleTranslationFailed": "Translation failed",
+  "geminiTranslationFailed": "Gemini translation failed",
   "googleOpenSettings": "Open settings"
 }

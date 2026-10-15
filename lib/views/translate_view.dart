@@ -1,26 +1,38 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../l10n/generated/app_localizations.dart';
 import '../models/article.dart';
+import '../models/translation_preset.dart';
 import '../services/article_segmenter.dart';
+import '../services/gemini_translation_service.dart';
 import '../services/google_translation_service.dart';
+import '../services/preset_store.dart';
 import '../ui/app_palette.dart';
 
 class TranslateView extends StatefulWidget {
   const TranslateView({
     super.key,
     required this.apiKey,
+    this.geminiApiKey = '',
+    this.geminiModel = GeminiTranslationService.defaultModel,
     required this.onOpenSettings,
     required this.onSaveArticle,
     this.service,
+    this.geminiService,
+    this.preferences,
   });
 
   final String apiKey;
+  final String geminiApiKey;
+  final String geminiModel;
   final VoidCallback onOpenSettings;
   final Future<void> Function(Article) onSaveArticle;
   final GoogleTranslationService? service;
+  final GeminiTranslationService? geminiService;
+  final SharedPreferences? preferences;
 
   @override
   State<TranslateView> createState() => _TranslateViewState();
@@ -32,6 +44,13 @@ class _TranslateViewState extends State<TranslateView> {
   final _translationFocus = FocusNode();
   late final GoogleTranslationService _service =
       widget.service ?? GoogleTranslationService();
+  late final GeminiTranslationService _geminiService =
+      widget.geminiService ?? GeminiTranslationService();
+  late final PresetStore _presetStore = PresetStore(widget.preferences);
+  PresetLibrarySnapshot _presetLibrary = PresetLibrarySnapshot.defaults;
+  String _selectedPresetId = PresetLibrarySnapshot.defaults.defaultPresetId;
+  bool _hasManuallySelectedPreset = false;
+  int _selectedEngine = 0;
   String? _sourceLanguage;
   String _targetLanguage = 'zh-TW';
   String? _error;
@@ -41,6 +60,139 @@ class _TranslateViewState extends State<TranslateView> {
   bool _editingResult = false;
   int _translationEpoch = 0;
   List<ArticleSegment> _translatedSegments = [];
+
+  TranslationPreset get _selectedPreset => _presetLibrary.presets.firstWhere(
+    (preset) => preset.id == _selectedPresetId,
+    orElse: () => TranslationPreset.fallback,
+  );
+
+  Future<void> _refreshPresets() async {
+    try {
+      final library = await _presetStore.load();
+      if (!mounted) return;
+      setState(() {
+        _presetLibrary = library;
+        if (!_hasManuallySelectedPreset ||
+            !library.presets.any((preset) => preset.id == _selectedPresetId)) {
+          _selectedPresetId = library.defaultPresetId;
+          _hasManuallySelectedPreset = false;
+        }
+      });
+    } catch (_) {
+      // Keep the last loaded preset library available if storage is unavailable.
+    }
+  }
+
+  void _pickPreset(String picked) {
+    setState(() {
+      _selectedPresetId = picked;
+      _hasManuallySelectedPreset = true;
+      _translatedSegments = [];
+      _translation.clear();
+      _hasTranslated = false;
+      _showResult = false;
+      _error = null;
+    });
+  }
+
+  List<TranslationPreset> get _orderedPresets => [
+    ..._presetLibrary.presets.where(
+      (preset) => preset.id == _presetLibrary.defaultPresetId,
+    ),
+    ..._presetLibrary.presets.where(
+      (preset) => preset.id != _presetLibrary.defaultPresetId,
+    ),
+  ];
+
+  Widget _presetDropdown(AppLocalizations l10n) => Expanded(
+    child: PopupMenuButton<String>(
+      key: const ValueKey('preset_dropdown'),
+      tooltip: l10n.translatePreset,
+      color: AppPalette.surfaceRaised,
+      position: PopupMenuPosition.under,
+      onOpened: _refreshPresets,
+      onSelected: _pickPreset,
+      itemBuilder: (_) => [
+        for (final preset in _orderedPresets)
+          PopupMenuItem(
+            value: preset.id,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(preset.name),
+                if (preset.id == _presetLibrary.defaultPresetId)
+                  Text(
+                    l10n.presetDefault,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: AppPalette.muted,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+      ],
+      child: _choiceContent(
+        l10n.translatePreset,
+        _selectedEngine == 0
+            ? l10n.googlePresetUnavailable
+            : _selectedPreset.name,
+        disabled: _selectedEngine == 0,
+        showChevron: true,
+        useInkWell: false,
+      ),
+    ),
+  );
+
+  Future<void> _showPromptPreview() async {
+    final l10n = AppLocalizations.of(context)!;
+    final prompt = GeminiPromptBuilder.build(
+      customPrompt: _selectedPreset.prompt,
+      glossary: _selectedPreset.glossary,
+      sourceLanguage: _sourceLanguage == null
+          ? '任意的語言'
+          : _languageName(l10n, _sourceLanguage),
+      targetLanguage: _languageName(l10n, _targetLanguage),
+      article: '...',
+    );
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppPalette.surface,
+        title: Text(
+          l10n.presetPromptPreview,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        content: SingleChildScrollView(child: SelectableText(prompt)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.articleCancel),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPresets();
+  }
+
+  Future<void> _loadPresets() async {
+    try {
+      final library = await _presetStore.load();
+      if (!mounted) return;
+      setState(() {
+        _presetLibrary = library;
+        _selectedPresetId = library.defaultPresetId;
+      });
+    } catch (_) {
+      // Keep built-in presets available if local storage cannot be read.
+    }
+  }
 
   @override
   void dispose() {
@@ -56,8 +208,13 @@ class _TranslateViewState extends State<TranslateView> {
       setState(() => _error = l10n.googleEnterText);
       return;
     }
-    if (widget.apiKey.isEmpty) {
-      setState(() => _error = l10n.googleConfigureFirst);
+    final apiKey = _selectedEngine == 0 ? widget.apiKey : widget.geminiApiKey;
+    if (apiKey.isEmpty) {
+      setState(
+        () => _error = _selectedEngine == 0
+            ? l10n.googleConfigureFirst
+            : l10n.geminiConfigureFirst,
+      );
       return;
     }
     final requestEpoch = ++_translationEpoch;
@@ -69,12 +226,30 @@ class _TranslateViewState extends State<TranslateView> {
       final source = _source.text;
       final segments = <ArticleSegment>[];
       for (final part in ArticleSegmenter.split(source)) {
-        final translated = await _service.translate(
-          text: part,
-          apiKey: widget.apiKey,
-          sourceLanguage: _sourceLanguage,
-          targetLanguage: _targetLanguage,
-        );
+        final String translated;
+        if (_selectedEngine == 0) {
+          translated = await _service.translate(
+            text: part,
+            apiKey: apiKey,
+            sourceLanguage: _sourceLanguage,
+            targetLanguage: _targetLanguage,
+          );
+        } else {
+          final prompt = GeminiPromptBuilder.build(
+            customPrompt: _selectedPreset.prompt,
+            glossary: _selectedPreset.glossary,
+            sourceLanguage: _sourceLanguage == null
+                ? '任意的語言'
+                : _languageName(l10n, _sourceLanguage),
+            targetLanguage: _languageName(l10n, _targetLanguage),
+            article: part,
+          );
+          translated = await _geminiService.translate(
+            prompt: prompt,
+            apiKey: apiKey,
+            model: widget.geminiModel,
+          );
+        }
         if (!mounted || requestEpoch != _translationEpoch) return;
         segments.add(ArticleSegment(source: part, translation: translated));
       }
@@ -95,9 +270,20 @@ class _TranslateViewState extends State<TranslateView> {
             ? l10n.googleApiKeyInvalid
             : '${l10n.googleTranslationFailed}: ${error.message}',
       );
+    } on GeminiTranslationException catch (error) {
+      if (!mounted || requestEpoch != _translationEpoch) return;
+      setState(
+        () => _error = error.statusCode == 400 || error.statusCode == 403
+            ? l10n.googleApiKeyInvalid
+            : '${l10n.geminiTranslationFailed}: ${error.message}',
+      );
     } catch (_) {
       if (!mounted || requestEpoch != _translationEpoch) return;
-      setState(() => _error = l10n.googleTranslationFailed);
+      setState(
+        () => _error = _selectedEngine == 0
+            ? l10n.googleTranslationFailed
+            : l10n.geminiTranslationFailed,
+      );
     } finally {
       if (mounted && requestEpoch == _translationEpoch) {
         setState(() => _busy = false);
@@ -204,7 +390,7 @@ class _TranslateViewState extends State<TranslateView> {
       createdAt: now,
       sourceLanguage: _sourceLanguage ?? 'auto',
       targetLanguage: _targetLanguage,
-      service: 'google',
+      service: _selectedEngine == 0 ? 'google' : 'gemini',
       segments: _segmentsForSave(),
     );
     try {
@@ -299,11 +485,7 @@ class _TranslateViewState extends State<TranslateView> {
                       children: [
                         _engineDropdown(l10n),
                         const SizedBox(width: 8),
-                        _choice(
-                          l10n.translatePreset,
-                          l10n.googlePresetUnavailable,
-                          disabled: true,
-                        ),
+                        _presetDropdown(l10n),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -401,7 +583,14 @@ class _TranslateViewState extends State<TranslateView> {
                                   ? null
                                   : _toggleResultEditing,
                             ),
-                          ] else
+                          ] else ...[
+                            if (_selectedEngine == 1)
+                              _toolbarButton(
+                                key: const ValueKey('gemini_prompt_preview'),
+                                icon: FLucideIcons.eye,
+                                tooltip: l10n.presetPromptPreview,
+                                onPressed: _showPromptPreview,
+                              ),
                             _toolbarButton(
                               key: const ValueKey('clear_source_button'),
                               icon: FLucideIcons.x,
@@ -410,6 +599,7 @@ class _TranslateViewState extends State<TranslateView> {
                                   ? null
                                   : _clearSource,
                             ),
+                          ],
                         ],
                       ),
                       const Divider(height: 22, color: AppPalette.border),
@@ -419,7 +609,7 @@ class _TranslateViewState extends State<TranslateView> {
                                 key: const ValueKey('translate_output'),
                                 controller: _translation,
                                 focusNode: _translationFocus,
-                                enabled: _editingResult,
+                                readOnly: !_editingResult,
                                 onChanged: (_) => setState(() {}),
                                 maxLines: null,
                                 expands: true,
@@ -464,7 +654,8 @@ class _TranslateViewState extends State<TranslateView> {
                   _error!,
                   style: const TextStyle(color: Colors.redAccent, fontSize: 12),
                 ),
-                if (widget.apiKey.isEmpty)
+                if ((_selectedEngine == 0 ? widget.apiKey : widget.geminiApiKey)
+                    .isEmpty)
                   TextButton(
                     onPressed: widget.onOpenSettings,
                     child: Text(l10n.googleOpenSettings),
@@ -533,9 +724,18 @@ class _TranslateViewState extends State<TranslateView> {
       key: const ValueKey('engine_dropdown'),
       tooltip: l10n.translateEngine,
       color: AppPalette.surfaceRaised,
+      onSelected: (engine) => setState(() {
+        _selectedEngine = engine;
+        _translation.clear();
+        _translatedSegments = [];
+        _hasTranslated = false;
+        _showResult = false;
+        _editingResult = false;
+        _error = null;
+      }),
       itemBuilder: (_) => [
         PopupMenuItem(value: 0, child: Text(l10n.googleTranslateName)),
-        const PopupMenuItem(value: 1, enabled: false, child: Text('Gemini')),
+        const PopupMenuItem(value: 1, child: Text('Gemini')),
         const PopupMenuItem(value: 2, enabled: false, child: Text('ChatGPT')),
       ],
       child: Container(
@@ -560,7 +760,7 @@ class _TranslateViewState extends State<TranslateView> {
                     ),
                   ),
                   Text(
-                    l10n.googleTranslateName,
+                    _selectedEngine == 0 ? l10n.googleTranslateName : 'Gemini',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -588,83 +788,93 @@ class _TranslateViewState extends State<TranslateView> {
     VoidCallback? onTap,
     bool disabled = false,
   }) => Expanded(
-    child: Opacity(
-      opacity: disabled ? 0.45 : 1,
-      child: InkWell(
-        onTap: disabled ? null : onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          height: 49,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: AppPalette.surfaceRaised,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (label.isNotEmpty)
-                      Text(
-                        label,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: AppPalette.muted,
-                        ),
-                      ),
-                    Text(
-                      value,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (onTap != null)
-                const Icon(
-                  FLucideIcons.chevronDown,
-                  size: 14,
-                  color: AppPalette.muted,
-                ),
-            ],
-          ),
-        ),
-      ),
-    ),
+    child: _choiceContent(label, value, onTap: onTap, disabled: disabled),
   );
 
-  Widget _tab(
+  Widget _choiceContent(
     String label,
-    bool selected,
-    VoidCallback onTap, {
-    Key? key,
-  }) => Expanded(
-    child: InkWell(
-      key: key,
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.all(3),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: selected ? AppPalette.surfaceRaised : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
-            color: selected ? Colors.white : AppPalette.muted,
+    String value, {
+    VoidCallback? onTap,
+    bool disabled = false,
+    bool showChevron = false,
+    bool useInkWell = true,
+  }) {
+    final field = Container(
+      height: 49,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: AppPalette.surfaceRaised,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (label.isNotEmpty)
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: AppPalette.muted,
+                    ),
+                  ),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (onTap != null || showChevron)
+            const Icon(
+              FLucideIcons.chevronDown,
+              size: 14,
+              color: AppPalette.muted,
+            ),
+        ],
+      ),
+    );
+    return Opacity(
+      opacity: disabled ? 0.45 : 1,
+      child: useInkWell
+          ? InkWell(
+              onTap: disabled ? null : onTap,
+              borderRadius: BorderRadius.circular(12),
+              child: field,
+            )
+          : field,
+    );
+  }
+
+  Widget _tab(String label, bool selected, VoidCallback onTap, {Key? key}) =>
+      Expanded(
+        child: InkWell(
+          key: key,
+          onTap: onTap,
+          child: Container(
+            margin: const EdgeInsets.all(3),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: selected ? AppPalette.surfaceRaised : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                color: selected ? Colors.white : AppPalette.muted,
+              ),
+            ),
           ),
         ),
-      ),
-    ),
-  );
+      );
 }

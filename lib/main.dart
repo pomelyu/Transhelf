@@ -9,6 +9,7 @@ import 'models/article.dart';
 import 'models/translation_preset.dart';
 import 'services/article_store.dart';
 import 'services/google_translation_service.dart';
+import 'services/gemini_translation_service.dart';
 import 'services/preset_store.dart';
 import 'ui/app_palette.dart';
 import 'views/reading_view.dart';
@@ -21,7 +22,20 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final preferences = await SharedPreferences.getInstance();
   final apiKey = preferences.getString('google_translate_api_key') ?? '';
-  runApp(TranshelfApp(preferences: preferences, initialApiKey: apiKey));
+  final geminiApiKey = preferences.getString('gemini_api_key') ?? '';
+  final storedGeminiModel = preferences.getString('gemini_model');
+  final geminiModel =
+      GeminiTranslationService.availableModels.contains(storedGeminiModel)
+      ? storedGeminiModel!
+      : GeminiTranslationService.defaultModel;
+  runApp(
+    TranshelfApp(
+      preferences: preferences,
+      initialApiKey: apiKey,
+      initialGeminiApiKey: geminiApiKey,
+      initialGeminiModel: geminiModel,
+    ),
+  );
 }
 
 class TranshelfApp extends StatefulWidget {
@@ -29,14 +43,20 @@ class TranshelfApp extends StatefulWidget {
     super.key,
     this.preferences,
     this.initialApiKey = '',
+    this.initialGeminiApiKey = '',
+    this.initialGeminiModel = GeminiTranslationService.defaultModel,
     this.articleStore,
     this.translationService,
+    this.geminiTranslationService,
   });
 
   final SharedPreferences? preferences;
   final String initialApiKey;
+  final String initialGeminiApiKey;
+  final String initialGeminiModel;
   final ArticleStore? articleStore;
   final GoogleTranslationService? translationService;
+  final GeminiTranslationService? geminiTranslationService;
 
   @override
   State<TranshelfApp> createState() => _TranshelfAppState();
@@ -44,6 +64,8 @@ class TranshelfApp extends StatefulWidget {
 
 class _TranshelfAppState extends State<TranshelfApp> {
   late String _googleApiKey = widget.initialApiKey;
+  late String _geminiApiKey = widget.initialGeminiApiKey;
+  late String _geminiModel = widget.initialGeminiModel;
   late Locale _locale = widget.preferences?.getString('app_locale') == 'en'
       ? const Locale('en')
       : const Locale.fromSubtags(
@@ -60,6 +82,16 @@ class _TranshelfAppState extends State<TranshelfApp> {
   Future<void> _changeGoogleApiKey(String apiKey) async {
     await widget.preferences?.setString('google_translate_api_key', apiKey);
     if (mounted) setState(() => _googleApiKey = apiKey);
+  }
+
+  Future<void> _changeGeminiApiKey(String apiKey) async {
+    await widget.preferences?.setString('gemini_api_key', apiKey);
+    if (mounted) setState(() => _geminiApiKey = apiKey);
+  }
+
+  Future<void> _changeGeminiModel(String model) async {
+    await widget.preferences?.setString('gemini_model', model);
+    if (mounted) setState(() => _geminiModel = model);
   }
 
   @override
@@ -91,8 +123,13 @@ class _TranshelfAppState extends State<TranshelfApp> {
           onLocaleChanged: _changeLocale,
           googleApiKey: _googleApiKey,
           onGoogleApiKeyChanged: _changeGoogleApiKey,
+          geminiApiKey: _geminiApiKey,
+          onGeminiApiKeyChanged: _changeGeminiApiKey,
+          geminiModel: _geminiModel,
+          onGeminiModelChanged: _changeGeminiModel,
           articleStore: widget.articleStore,
           translationService: widget.translationService,
+          geminiTranslationService: widget.geminiTranslationService,
           preferences: widget.preferences,
         ),
       ),
@@ -107,8 +144,13 @@ class MainShell extends StatefulWidget {
     required this.onLocaleChanged,
     required this.googleApiKey,
     required this.onGoogleApiKeyChanged,
+    required this.geminiApiKey,
+    required this.onGeminiApiKeyChanged,
+    required this.geminiModel,
+    required this.onGeminiModelChanged,
     this.articleStore,
     this.translationService,
+    this.geminiTranslationService,
     this.preferences,
   });
 
@@ -116,8 +158,13 @@ class MainShell extends StatefulWidget {
   final ValueChanged<Locale> onLocaleChanged;
   final String googleApiKey;
   final Future<void> Function(String) onGoogleApiKeyChanged;
+  final String geminiApiKey;
+  final Future<void> Function(String) onGeminiApiKeyChanged;
+  final String geminiModel;
+  final Future<void> Function(String) onGeminiModelChanged;
   final ArticleStore? articleStore;
   final GoogleTranslationService? translationService;
+  final GeminiTranslationService? geminiTranslationService;
   final SharedPreferences? preferences;
 
   @override
@@ -248,9 +295,13 @@ class _MainShellState extends State<MainShell> {
           TranslateView(
             key: const ValueKey('view.translate'),
             apiKey: widget.googleApiKey,
+            geminiApiKey: widget.geminiApiKey,
+            geminiModel: widget.geminiModel,
             onOpenSettings: () => setState(() => _index = 2),
             onSaveArticle: _saveArticle,
             service: widget.translationService,
+            geminiService: widget.geminiTranslationService,
+            preferences: widget.preferences,
           ),
           ShelfView(
             key: const ValueKey('view.shelf'),
@@ -264,6 +315,10 @@ class _MainShellState extends State<MainShell> {
             onLocaleChanged: widget.onLocaleChanged,
             googleApiKey: widget.googleApiKey,
             onGoogleApiKeyChanged: widget.onGoogleApiKeyChanged,
+            geminiApiKey: widget.geminiApiKey,
+            onGeminiApiKeyChanged: widget.onGeminiApiKeyChanged,
+            geminiModel: widget.geminiModel,
+            onGeminiModelChanged: widget.onGeminiModelChanged,
             onOpenPresets: _openPresetManager,
           ),
         ],

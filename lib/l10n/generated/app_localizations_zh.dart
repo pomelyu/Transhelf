@@ -285,6 +285,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get googleApiKeySaved => 'API key 已儲存';
 
   @override
+  String get translatorModelLabel => '翻譯模型';
+
+  @override
+  String get translatorModelSaveFailed => '無法儲存翻譯模型';
+
+  @override
   String get googleApiKeySaveFailed => '無法儲存 API key';
 
   @override
@@ -321,10 +327,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get googleConfigureFirst => '請先設定 Google 翻譯 API key。';
 
   @override
+  String get geminiConfigureFirst => '請先設定 Gemini API key。';
+
+  @override
   String get googleApiKeyInvalid => 'API key 無效或未獲授權，請到設定更新。';
 
   @override
   String get googleTranslationFailed => '翻譯失敗';
+
+  @override
+  String get geminiTranslationFailed => 'Gemini 翻譯失敗';
 
   @override
   String get googleOpenSettings => '前往設定';

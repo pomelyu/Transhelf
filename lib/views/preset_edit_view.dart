@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 
 import '../l10n/generated/app_localizations.dart';
 import '../models/translation_preset.dart';
+import '../services/gemini_translation_service.dart';
 import '../ui/app_palette.dart';
 
 class PresetEditView extends StatefulWidget {
@@ -184,16 +185,13 @@ class _PresetEditViewState extends State<PresetEditView> {
   String _buildPromptPreview(
     String customPrompt,
     List<PresetGlossaryEntry> glossary,
-  ) {
-    final glossaryText = glossary
-        .map((entry) => '${entry.source} → ${entry.target}')
-        .join('\n');
-    return '$customPrompt\n\n'
-        '字彙表：\n'
-        '$glossaryText\n\n'
-        '文章：\n'
-        '<待翻譯的文章>';
-  }
+  ) => GeminiPromptBuilder.build(
+    customPrompt: customPrompt,
+    glossary: glossary,
+    sourceLanguage: r'${source}',
+    targetLanguage: r'${target}',
+    article: '<待翻譯的文章>',
+  );
 
   @override
   Widget build(BuildContext context) {

@@ -53,16 +53,16 @@ void main() {
     expect(
       tester
           .widget<TextField>(find.byKey(const ValueKey('translate_output')))
-          .enabled,
-      isFalse,
+          .readOnly,
+      isTrue,
     );
     await tester.tap(find.byKey(const ValueKey('edit_translation_button')));
     await tester.pumpAndSettle();
     expect(
       tester
           .widget<TextField>(find.byKey(const ValueKey('translate_output')))
-          .enabled,
-      isTrue,
+          .readOnly,
+      isFalse,
     );
     await tester.enterText(
       find.byKey(const ValueKey('translate_output')),
@@ -74,8 +74,8 @@ void main() {
     expect(
       tester
           .widget<TextField>(find.byKey(const ValueKey('translate_output')))
-          .enabled,
-      isFalse,
+          .readOnly,
+      isTrue,
     );
     await tester.tap(find.byKey(const ValueKey('save_article_button')));
     await tester.pumpAndSettle();
