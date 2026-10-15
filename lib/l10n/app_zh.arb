@@ -70,6 +70,7 @@
   "presetName": "名稱",
   "presetNameHint": "例如：學術論文",
   "presetPrompt": "自訂提示詞",
+  "presetPromptPreview": "提示詞預覽",
   "presetPromptHint": "參考詞彙表翻譯文章，並保留專有名詞和人名。",
   "presetGlossary": "自訂詞彙",
   "presetAddTerm": "新增詞彙",

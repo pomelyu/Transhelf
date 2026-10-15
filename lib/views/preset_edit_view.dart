@@ -158,6 +158,43 @@ class _PresetEditViewState extends State<PresetEditView> {
     });
   }
 
+  Future<void> _showPromptPreview() async {
+    final l10n = AppLocalizations.of(context)!;
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppPalette.surface,
+        title: Text(
+          l10n.presetPromptPreview,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        content: SingleChildScrollView(
+          child: SelectableText(_buildPromptPreview(_prompt.text, _glossary)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.articleCancel),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _buildPromptPreview(
+    String customPrompt,
+    List<PresetGlossaryEntry> glossary,
+  ) {
+    final glossaryText = glossary
+        .map((entry) => '${entry.source} → ${entry.target}')
+        .join('\n');
+    return '$customPrompt\n\n'
+        '字彙表：\n'
+        '$glossaryText\n\n'
+        '文章：\n'
+        '<待翻譯的文章>';
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -232,7 +269,34 @@ class _PresetEditViewState extends State<PresetEditView> {
                     decoration: _inputDecoration(hintText: l10n.presetNameHint),
                   ),
                   const SizedBox(height: 7),
-                  _label(l10n.presetPrompt),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 7),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            l10n.presetPrompt,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          key: const ValueKey('preset_prompt_preview'),
+                          tooltip: l10n.presetPromptPreview,
+                          visualDensity: VisualDensity.compact,
+                          constraints: const BoxConstraints.tightFor(
+                            width: 36,
+                            height: 32,
+                          ),
+                          padding: EdgeInsets.zero,
+                          onPressed: _showPromptPreview,
+                          icon: const Icon(FLucideIcons.eye, size: 18),
+                        ),
+                      ],
+                    ),
+                  ),
                   TextField(
                     key: const ValueKey('preset_prompt_input'),
                     controller: _prompt,

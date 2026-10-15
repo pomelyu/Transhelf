@@ -512,6 +512,12 @@ abstract class AppLocalizations {
   /// **'自訂提示詞'**
   String get presetPrompt;
 
+  /// No description provided for @presetPromptPreview.
+  ///
+  /// In zh, this message translates to:
+  /// **'提示詞預覽'**
+  String get presetPromptPreview;
+
   /// No description provided for @presetPromptHint.
   ///
   /// In zh, this message translates to:

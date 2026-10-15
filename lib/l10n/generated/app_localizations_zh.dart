@@ -219,6 +219,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get presetPrompt => '自訂提示詞';
 
   @override
+  String get presetPromptPreview => '提示詞預覽';
+
+  @override
   String get presetPromptHint => '參考詞彙表翻譯文章，並保留專有名詞和人名。';
 
   @override

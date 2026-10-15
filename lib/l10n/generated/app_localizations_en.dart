@@ -221,6 +221,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get presetPrompt => 'Custom prompt';
 
   @override
+  String get presetPromptPreview => 'Prompt preview';
+
+  @override
   String get presetPromptHint =>
       'Translate the article using the glossary while preserving technical terms and names.';
 

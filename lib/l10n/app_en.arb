@@ -70,6 +70,7 @@
   "presetName": "Name",
   "presetNameHint": "For example: Academic papers",
   "presetPrompt": "Custom prompt",
+  "presetPromptPreview": "Prompt preview",
   "presetPromptHint": "Translate the article using the glossary while preserving technical terms and names.",
   "presetGlossary": "Custom glossary",
   "presetAddTerm": "Add term",
