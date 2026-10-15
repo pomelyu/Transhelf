@@ -189,8 +189,11 @@ class _PresetEditViewState extends State<PresetEditView> {
                     ),
                   ),
                   if (widget.preset != null && !_isCopyDraft)
-                    TextButton.icon(
+                    IconButton(
                       key: const ValueKey('preset_set_default'),
+                      tooltip: _isDefault
+                          ? l10n.presetDefault
+                          : l10n.presetSetDefault,
                       onPressed: _isDefault
                           ? null
                           : () async {
@@ -198,10 +201,9 @@ class _PresetEditViewState extends State<PresetEditView> {
                               if (mounted) setState(() => _isDefault = true);
                             },
                       icon: Icon(
-                        _isDefault ? FLucideIcons.check : FLucideIcons.star,
-                        size: 16,
+                        _isDefault ? Icons.star : Icons.star_outline,
+                        size: 20,
                       ),
-                      label: Text(l10n.presetSetDefault),
                     ),
                   if (widget.preset != null)
                     IconButton(
