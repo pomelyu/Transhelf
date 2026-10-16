@@ -7,6 +7,7 @@ import '../l10n/generated/app_localizations.dart';
 import '../models/article.dart';
 import '../models/translation_preset.dart';
 import '../services/article_segmenter.dart';
+import '../services/chatgpt_translation_service.dart';
 import '../services/gemini_translation_service.dart';
 import '../services/google_translation_service.dart';
 import '../services/preset_store.dart';
@@ -18,20 +19,26 @@ class TranslateView extends StatefulWidget {
     required this.apiKey,
     this.geminiApiKey = '',
     this.geminiModel = GeminiTranslationService.defaultModel,
+    this.chatGPTApiKey = '',
+    this.chatGPTModel = ChatGPTTranslationService.defaultModel,
     required this.onOpenSettings,
     required this.onSaveArticle,
     this.service,
     this.geminiService,
+    this.chatGPTService,
     this.preferences,
   });
 
   final String apiKey;
   final String geminiApiKey;
   final String geminiModel;
+  final String chatGPTApiKey;
+  final String chatGPTModel;
   final VoidCallback onOpenSettings;
   final Future<void> Function(Article) onSaveArticle;
   final GoogleTranslationService? service;
   final GeminiTranslationService? geminiService;
+  final ChatGPTTranslationService? chatGPTService;
   final SharedPreferences? preferences;
 
   @override
@@ -46,6 +53,8 @@ class _TranslateViewState extends State<TranslateView> {
       widget.service ?? GoogleTranslationService();
   late final GeminiTranslationService _geminiService =
       widget.geminiService ?? GeminiTranslationService();
+  late final ChatGPTTranslationService _chatGPTService =
+      widget.chatGPTService ?? ChatGPTTranslationService();
   late final PresetStore _presetStore = PresetStore(widget.preferences);
   PresetLibrarySnapshot _presetLibrary = PresetLibrarySnapshot.defaults;
   String _selectedPresetId = PresetLibrarySnapshot.defaults.defaultPresetId;
@@ -208,12 +217,18 @@ class _TranslateViewState extends State<TranslateView> {
       setState(() => _error = l10n.googleEnterText);
       return;
     }
-    final apiKey = _selectedEngine == 0 ? widget.apiKey : widget.geminiApiKey;
+    final apiKey = switch (_selectedEngine) {
+      0 => widget.apiKey,
+      1 => widget.geminiApiKey,
+      _ => widget.chatGPTApiKey,
+    };
     if (apiKey.isEmpty) {
       setState(
         () => _error = _selectedEngine == 0
             ? l10n.googleConfigureFirst
-            : l10n.geminiConfigureFirst,
+            : _selectedEngine == 1
+            ? l10n.geminiConfigureFirst
+            : l10n.chatGPTConfigureFirst,
       );
       return;
     }
@@ -234,7 +249,7 @@ class _TranslateViewState extends State<TranslateView> {
             sourceLanguage: _sourceLanguage,
             targetLanguage: _targetLanguage,
           );
-        } else {
+        } else if (_selectedEngine == 1) {
           final prompt = GeminiPromptBuilder.build(
             customPrompt: _selectedPreset.prompt,
             glossary: _selectedPreset.glossary,
@@ -248,6 +263,21 @@ class _TranslateViewState extends State<TranslateView> {
             prompt: prompt,
             apiKey: apiKey,
             model: widget.geminiModel,
+          );
+        } else {
+          final prompt = GeminiPromptBuilder.build(
+            customPrompt: _selectedPreset.prompt,
+            glossary: _selectedPreset.glossary,
+            sourceLanguage: _sourceLanguage == null
+                ? '任意的語言'
+                : _languageName(l10n, _sourceLanguage),
+            targetLanguage: _languageName(l10n, _targetLanguage),
+            article: part,
+          );
+          translated = await _chatGPTService.translate(
+            prompt: prompt,
+            apiKey: apiKey,
+            model: widget.chatGPTModel,
           );
         }
         if (!mounted || requestEpoch != _translationEpoch) return;
@@ -277,12 +307,21 @@ class _TranslateViewState extends State<TranslateView> {
             ? l10n.googleApiKeyInvalid
             : '${l10n.geminiTranslationFailed}: ${error.message}',
       );
+    } on ChatGPTTranslationException catch (error) {
+      if (!mounted || requestEpoch != _translationEpoch) return;
+      setState(
+        () => _error = error.statusCode == 400 || error.statusCode == 401
+            ? l10n.chatGPTApiKeyInvalid
+            : '${l10n.chatGPTTranslationFailed}: ${error.message}',
+      );
     } catch (_) {
       if (!mounted || requestEpoch != _translationEpoch) return;
       setState(
         () => _error = _selectedEngine == 0
             ? l10n.googleTranslationFailed
-            : l10n.geminiTranslationFailed,
+            : _selectedEngine == 1
+            ? l10n.geminiTranslationFailed
+            : l10n.chatGPTTranslationFailed,
       );
     } finally {
       if (mounted && requestEpoch == _translationEpoch) {
@@ -390,7 +429,11 @@ class _TranslateViewState extends State<TranslateView> {
       createdAt: now,
       sourceLanguage: _sourceLanguage ?? 'auto',
       targetLanguage: _targetLanguage,
-      service: _selectedEngine == 0 ? 'google' : 'gemini',
+      service: switch (_selectedEngine) {
+        0 => 'google',
+        1 => 'gemini',
+        _ => 'chatgpt',
+      },
       segments: _segmentsForSave(),
     );
     try {
@@ -459,6 +502,11 @@ class _TranslateViewState extends State<TranslateView> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final engineName = switch (_selectedEngine) {
+      0 => l10n.googleTranslateName,
+      1 => 'Gemini',
+      _ => 'ChatGPT',
+    };
     return Material(
       color: Colors.transparent,
       child: SafeArea(
@@ -548,7 +596,7 @@ class _TranslateViewState extends State<TranslateView> {
                           Expanded(
                             child: Text(
                               _showResult
-                                  ? 'Google Translate · ${l10n.translateResult}'
+                                  ? '$engineName · ${l10n.translateResult}'
                                   : '${_source.text.length} ${l10n.translateCharacters}',
                               style: const TextStyle(
                                 fontSize: 11,
@@ -584,7 +632,7 @@ class _TranslateViewState extends State<TranslateView> {
                                   : _toggleResultEditing,
                             ),
                           ] else ...[
-                            if (_selectedEngine == 1)
+                            if (_selectedEngine > 0)
                               _toolbarButton(
                                 key: const ValueKey('gemini_prompt_preview'),
                                 icon: FLucideIcons.eye,
@@ -654,8 +702,11 @@ class _TranslateViewState extends State<TranslateView> {
                   _error!,
                   style: const TextStyle(color: Colors.redAccent, fontSize: 12),
                 ),
-                if ((_selectedEngine == 0 ? widget.apiKey : widget.geminiApiKey)
-                    .isEmpty)
+                if (switch (_selectedEngine) {
+                  0 => widget.apiKey,
+                  1 => widget.geminiApiKey,
+                  _ => widget.chatGPTApiKey,
+                }.isEmpty)
                   TextButton(
                     onPressed: widget.onOpenSettings,
                     child: Text(l10n.googleOpenSettings),
@@ -736,7 +787,7 @@ class _TranslateViewState extends State<TranslateView> {
       itemBuilder: (_) => [
         PopupMenuItem(value: 0, child: Text(l10n.googleTranslateName)),
         const PopupMenuItem(value: 1, child: Text('Gemini')),
-        const PopupMenuItem(value: 2, enabled: false, child: Text('ChatGPT')),
+        const PopupMenuItem(value: 2, child: Text('ChatGPT')),
       ],
       child: Container(
         height: 49,
@@ -760,7 +811,11 @@ class _TranslateViewState extends State<TranslateView> {
                     ),
                   ),
                   Text(
-                    _selectedEngine == 0 ? l10n.googleTranslateName : 'Gemini',
+                    switch (_selectedEngine) {
+                      0 => l10n.googleTranslateName,
+                      1 => 'Gemini',
+                      _ => 'ChatGPT',
+                    },
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transhelf/main.dart';
+import 'package:transhelf/services/chatgpt_translation_service.dart';
 
 void main() {
   testWidgets('main navigation and language setting work', (tester) async {
@@ -106,6 +107,21 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('service_tab_2')));
     await tester.pumpAndSettle();
-    expect(find.text('即將推出'), findsOneWidget);
+    expect(find.byKey(const ValueKey('chatgpt_api_key')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('chatgpt_model_selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('GPT-4.1 Mini'));
+    await tester.pumpAndSettle();
+    expect(preferences.getString('chatgpt_model'), 'gpt-4.1-mini');
+    await tester.tap(find.byKey(const ValueKey('edit_chatgpt_api_key')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('chatgpt_api_key')),
+      'openai-test-key',
+    );
+    await tester.tap(find.byKey(const ValueKey('save_chatgpt_api_key')));
+    await tester.pumpAndSettle();
+    expect(preferences.getString('chatgpt_api_key'), 'openai-test-key');
+    expect(ChatGPTTranslationService.availableModels, contains('gpt-4.1-mini'));
   });
 }

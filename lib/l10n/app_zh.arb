@@ -110,5 +110,8 @@
   "googleApiKeyInvalid": "API key 無效或未獲授權，請到設定更新。",
   "googleTranslationFailed": "翻譯失敗",
   "geminiTranslationFailed": "Gemini 翻譯失敗",
+  "chatGPTConfigureFirst": "請先設定 OpenAI API key。",
+  "chatGPTApiKeyInvalid": "OpenAI API key 無效或未獲授權。",
+  "chatGPTTranslationFailed": "ChatGPT 翻譯失敗",
   "googleOpenSettings": "前往設定"
 }

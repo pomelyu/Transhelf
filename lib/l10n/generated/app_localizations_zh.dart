@@ -339,5 +339,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get geminiTranslationFailed => 'Gemini 翻譯失敗';
 
   @override
+  String get chatGPTConfigureFirst => '請先設定 OpenAI API key。';
+
+  @override
+  String get chatGPTApiKeyInvalid => 'OpenAI API key 無效或未獲授權。';
+
+  @override
+  String get chatGPTTranslationFailed => 'ChatGPT 翻譯失敗';
+
+  @override
   String get googleOpenSettings => '前往設定';
 }

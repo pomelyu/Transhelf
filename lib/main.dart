@@ -10,6 +10,7 @@ import 'models/translation_preset.dart';
 import 'services/article_store.dart';
 import 'services/google_translation_service.dart';
 import 'services/gemini_translation_service.dart';
+import 'services/chatgpt_translation_service.dart';
 import 'services/preset_store.dart';
 import 'ui/app_palette.dart';
 import 'views/reading_view.dart';
@@ -28,12 +29,20 @@ Future<void> main() async {
       GeminiTranslationService.availableModels.contains(storedGeminiModel)
       ? storedGeminiModel!
       : GeminiTranslationService.defaultModel;
+  final chatGptApiKey = preferences.getString('chatgpt_api_key') ?? '';
+  final storedChatGptModel = preferences.getString('chatgpt_model');
+  final chatGptModel =
+      ChatGPTTranslationService.availableModels.contains(storedChatGptModel)
+      ? storedChatGptModel!
+      : ChatGPTTranslationService.defaultModel;
   runApp(
     TranshelfApp(
       preferences: preferences,
       initialApiKey: apiKey,
       initialGeminiApiKey: geminiApiKey,
       initialGeminiModel: geminiModel,
+      initialChatGPTApiKey: chatGptApiKey,
+      initialChatGPTModel: chatGptModel,
     ),
   );
 }
@@ -45,18 +54,24 @@ class TranshelfApp extends StatefulWidget {
     this.initialApiKey = '',
     this.initialGeminiApiKey = '',
     this.initialGeminiModel = GeminiTranslationService.defaultModel,
+    this.initialChatGPTApiKey = '',
+    this.initialChatGPTModel = ChatGPTTranslationService.defaultModel,
     this.articleStore,
     this.translationService,
     this.geminiTranslationService,
+    this.chatGPTTranslationService,
   });
 
   final SharedPreferences? preferences;
   final String initialApiKey;
   final String initialGeminiApiKey;
   final String initialGeminiModel;
+  final String initialChatGPTApiKey;
+  final String initialChatGPTModel;
   final ArticleStore? articleStore;
   final GoogleTranslationService? translationService;
   final GeminiTranslationService? geminiTranslationService;
+  final ChatGPTTranslationService? chatGPTTranslationService;
 
   @override
   State<TranshelfApp> createState() => _TranshelfAppState();
@@ -66,6 +81,8 @@ class _TranshelfAppState extends State<TranshelfApp> {
   late String _googleApiKey = widget.initialApiKey;
   late String _geminiApiKey = widget.initialGeminiApiKey;
   late String _geminiModel = widget.initialGeminiModel;
+  late String _chatGPTApiKey = widget.initialChatGPTApiKey;
+  late String _chatGPTModel = widget.initialChatGPTModel;
   late Locale _locale = widget.preferences?.getString('app_locale') == 'en'
       ? const Locale('en')
       : const Locale.fromSubtags(
@@ -92,6 +109,16 @@ class _TranshelfAppState extends State<TranshelfApp> {
   Future<void> _changeGeminiModel(String model) async {
     await widget.preferences?.setString('gemini_model', model);
     if (mounted) setState(() => _geminiModel = model);
+  }
+
+  Future<void> _changeChatGPTApiKey(String apiKey) async {
+    await widget.preferences?.setString('chatgpt_api_key', apiKey);
+    if (mounted) setState(() => _chatGPTApiKey = apiKey);
+  }
+
+  Future<void> _changeChatGPTModel(String model) async {
+    await widget.preferences?.setString('chatgpt_model', model);
+    if (mounted) setState(() => _chatGPTModel = model);
   }
 
   @override
@@ -127,9 +154,14 @@ class _TranshelfAppState extends State<TranshelfApp> {
           onGeminiApiKeyChanged: _changeGeminiApiKey,
           geminiModel: _geminiModel,
           onGeminiModelChanged: _changeGeminiModel,
+          chatGPTApiKey: _chatGPTApiKey,
+          onChatGPTApiKeyChanged: _changeChatGPTApiKey,
+          chatGPTModel: _chatGPTModel,
+          onChatGPTModelChanged: _changeChatGPTModel,
           articleStore: widget.articleStore,
           translationService: widget.translationService,
           geminiTranslationService: widget.geminiTranslationService,
+          chatGPTTranslationService: widget.chatGPTTranslationService,
           preferences: widget.preferences,
         ),
       ),
@@ -148,9 +180,14 @@ class MainShell extends StatefulWidget {
     required this.onGeminiApiKeyChanged,
     required this.geminiModel,
     required this.onGeminiModelChanged,
+    required this.chatGPTApiKey,
+    required this.onChatGPTApiKeyChanged,
+    required this.chatGPTModel,
+    required this.onChatGPTModelChanged,
     this.articleStore,
     this.translationService,
     this.geminiTranslationService,
+    this.chatGPTTranslationService,
     this.preferences,
   });
 
@@ -162,9 +199,14 @@ class MainShell extends StatefulWidget {
   final Future<void> Function(String) onGeminiApiKeyChanged;
   final String geminiModel;
   final Future<void> Function(String) onGeminiModelChanged;
+  final String chatGPTApiKey;
+  final Future<void> Function(String) onChatGPTApiKeyChanged;
+  final String chatGPTModel;
+  final Future<void> Function(String) onChatGPTModelChanged;
   final ArticleStore? articleStore;
   final GoogleTranslationService? translationService;
   final GeminiTranslationService? geminiTranslationService;
+  final ChatGPTTranslationService? chatGPTTranslationService;
   final SharedPreferences? preferences;
 
   @override
@@ -297,10 +339,13 @@ class _MainShellState extends State<MainShell> {
             apiKey: widget.googleApiKey,
             geminiApiKey: widget.geminiApiKey,
             geminiModel: widget.geminiModel,
+            chatGPTApiKey: widget.chatGPTApiKey,
+            chatGPTModel: widget.chatGPTModel,
             onOpenSettings: () => setState(() => _index = 2),
             onSaveArticle: _saveArticle,
             service: widget.translationService,
             geminiService: widget.geminiTranslationService,
+            chatGPTService: widget.chatGPTTranslationService,
             preferences: widget.preferences,
           ),
           ShelfView(
@@ -319,6 +364,10 @@ class _MainShellState extends State<MainShell> {
             onGeminiApiKeyChanged: widget.onGeminiApiKeyChanged,
             geminiModel: widget.geminiModel,
             onGeminiModelChanged: widget.onGeminiModelChanged,
+            chatGPTApiKey: widget.chatGPTApiKey,
+            onChatGPTApiKeyChanged: widget.onChatGPTApiKeyChanged,
+            chatGPTModel: widget.chatGPTModel,
+            onChatGPTModelChanged: widget.onChatGPTModelChanged,
             onOpenPresets: _openPresetManager,
           ),
         ],

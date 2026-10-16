@@ -344,5 +344,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get geminiTranslationFailed => 'Gemini translation failed';
 
   @override
+  String get chatGPTConfigureFirst => 'Set your OpenAI API key first.';
+
+  @override
+  String get chatGPTApiKeyInvalid =>
+      'OpenAI API key is invalid or not authorized.';
+
+  @override
+  String get chatGPTTranslationFailed => 'ChatGPT translation failed';
+
+  @override
   String get googleOpenSettings => 'Open settings';
 }

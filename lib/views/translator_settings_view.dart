@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import '../l10n/generated/app_localizations.dart';
+import '../services/chatgpt_translation_service.dart';
 import '../services/gemini_translation_service.dart';
 import '../ui/app_palette.dart';
 
@@ -14,6 +15,10 @@ class TranslatorSettingsView extends StatefulWidget {
     required this.onGeminiApiKeyChanged,
     required this.geminiModel,
     required this.onGeminiModelChanged,
+    required this.chatGPTApiKey,
+    required this.onChatGPTApiKeyChanged,
+    required this.chatGPTModel,
+    required this.onChatGPTModelChanged,
   });
 
   final String apiKey;
@@ -22,6 +27,10 @@ class TranslatorSettingsView extends StatefulWidget {
   final Future<void> Function(String) onGeminiApiKeyChanged;
   final String geminiModel;
   final Future<void> Function(String) onGeminiModelChanged;
+  final String chatGPTApiKey;
+  final Future<void> Function(String) onChatGPTApiKeyChanged;
+  final String chatGPTModel;
+  final Future<void> Function(String) onChatGPTModelChanged;
 
   @override
   State<TranslatorSettingsView> createState() => _TranslatorSettingsViewState();
@@ -32,15 +41,23 @@ class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
   late final _geminiController = TextEditingController(
     text: widget.geminiApiKey,
   );
+  late final _chatGPTController = TextEditingController(
+    text: widget.chatGPTApiKey,
+  );
   late String _selectedGeminiModel =
       GeminiTranslationService.availableModels.contains(widget.geminiModel)
       ? widget.geminiModel
       : GeminiTranslationService.defaultModel;
+  late String _selectedChatGPTModel =
+      ChatGPTTranslationService.availableModels.contains(widget.chatGPTModel)
+      ? widget.chatGPTModel
+      : ChatGPTTranslationService.defaultModel;
   bool _visible = false;
   bool _saving = false;
   bool _editing = false;
   late bool _configured = widget.apiKey.isNotEmpty;
   late bool _geminiConfigured = widget.geminiApiKey.isNotEmpty;
+  late bool _chatGPTConfigured = widget.chatGPTApiKey.isNotEmpty;
   String? _error;
   String? _notice;
   int _selectedService = 0;
@@ -49,12 +66,17 @@ class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
   void dispose() {
     _controller.dispose();
     _geminiController.dispose();
+    _chatGPTController.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
     final l10n = AppLocalizations.of(context)!;
-    final controller = _selectedService == 0 ? _controller : _geminiController;
+    final controller = switch (_selectedService) {
+      0 => _controller,
+      1 => _geminiController,
+      _ => _chatGPTController,
+    };
     final apiKey = controller.text.trim();
     if (apiKey.isEmpty) {
       setState(() => _error = l10n.googleApiKeyHint);
@@ -68,15 +90,19 @@ class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
     try {
       if (_selectedService == 0) {
         await widget.onApiKeyChanged(apiKey);
-      } else {
+      } else if (_selectedService == 1) {
         await widget.onGeminiApiKeyChanged(apiKey);
+      } else {
+        await widget.onChatGPTApiKeyChanged(apiKey);
       }
       if (!mounted) return;
       setState(() {
         if (_selectedService == 0) {
           _configured = true;
-        } else {
+        } else if (_selectedService == 1) {
           _geminiConfigured = true;
+        } else {
+          _chatGPTConfigured = true;
         }
         _editing = false;
         _visible = false;
@@ -87,6 +113,24 @@ class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
       setState(() => _error = l10n.googleApiKeySaveFailed);
     } finally {
       if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _selectChatGPTModel(String model) async {
+    final previousModel = _selectedChatGPTModel;
+    setState(() {
+      _selectedChatGPTModel = model;
+      _error = null;
+      _notice = null;
+    });
+    try {
+      await widget.onChatGPTModelChanged(model);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _selectedChatGPTModel = previousModel;
+        _error = AppLocalizations.of(context)!.translatorModelSaveFailed;
+      });
     }
   }
 
@@ -112,9 +156,26 @@ class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final services = [l10n.googleTranslateName, 'Gemini', 'ChatGPT'];
+    final isGemini = _selectedService == 1;
+    final selectedModel = isGemini
+        ? _selectedGeminiModel
+        : _selectedChatGPTModel;
+    final availableModels = isGemini
+        ? GeminiTranslationService.availableModels
+        : ChatGPTTranslationService.availableModels;
+    final displayNames = isGemini
+        ? GeminiTranslationService.modelDisplayNames
+        : ChatGPTTranslationService.modelDisplayNames;
+    final apiKeyController = switch (_selectedService) {
+      0 => _controller,
+      1 => _geminiController,
+      _ => _chatGPTController,
+    };
     final activeConfigured = _selectedService == 0
         ? _configured
-        : _geminiConfigured;
+        : _selectedService == 1
+        ? _geminiConfigured
+        : _chatGPTConfigured;
     final icons = [
       FLucideIcons.languages,
       FLucideIcons.sparkles,
@@ -156,6 +217,7 @@ class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
                 final configured = switch (index) {
                   0 => _configured,
                   1 => _geminiConfigured,
+                  2 => _chatGPTConfigured,
                   _ => false,
                 };
                 return Expanded(
@@ -228,7 +290,7 @@ class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
                 border: Border.all(color: AppPalette.border),
                 borderRadius: BorderRadius.circular(17),
               ),
-              child: _selectedService < 2
+              child: _selectedService < 3
                   ? Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -264,11 +326,11 @@ class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
                             ),
                             if (!_editing)
                               IconButton(
-                                key: ValueKey(
-                                  _selectedService == 0
-                                      ? 'edit_google_api_key'
-                                      : 'edit_gemini_api_key',
-                                ),
+                                key: ValueKey(switch (_selectedService) {
+                                  0 => 'edit_google_api_key',
+                                  1 => 'edit_gemini_api_key',
+                                  _ => 'edit_chatgpt_api_key',
+                                }),
                                 tooltip: l10n.googleEditApiKey,
                                 visualDensity: VisualDensity.compact,
                                 onPressed: () => setState(() {
@@ -282,14 +344,12 @@ class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
                         ),
                         const SizedBox(height: 7),
                         TextField(
-                          key: ValueKey(
-                            _selectedService == 0
-                                ? 'google_api_key'
-                                : 'gemini_api_key',
-                          ),
-                          controller: _selectedService == 0
-                              ? _controller
-                              : _geminiController,
+                          key: ValueKey(switch (_selectedService) {
+                            0 => 'google_api_key',
+                            1 => 'gemini_api_key',
+                            _ => 'chatgpt_api_key',
+                          }),
+                          controller: apiKeyController,
                           enabled: _editing,
                           obscureText: !_visible || !_editing,
                           autocorrect: false,
@@ -315,7 +375,7 @@ class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
                             ),
                           ),
                         ),
-                        if (_selectedService == 1) ...[
+                        if (_selectedService > 0) ...[
                           const SizedBox(height: 18),
                           Text(
                             l10n.translatorModelLabel,
@@ -328,8 +388,10 @@ class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
                           SizedBox(
                             height: 56,
                             child: InputDecorator(
-                              key: const ValueKey(
-                                'gemini_model_selector_container',
+                              key: ValueKey(
+                                isGemini
+                                    ? 'gemini_model_selector_container'
+                                    : 'chatgpt_model_selector_container',
                               ),
                               decoration: InputDecoration(
                                 contentPadding: const EdgeInsets.symmetric(
@@ -342,26 +404,30 @@ class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
                               ),
                               child: DropdownButtonHideUnderline(
                                 child: DropdownButton<String>(
-                                  key: const ValueKey('gemini_model_selector'),
-                                  value: _selectedGeminiModel,
+                                  key: ValueKey(
+                                    isGemini
+                                        ? 'gemini_model_selector'
+                                        : 'chatgpt_model_selector',
+                                  ),
+                                  value: selectedModel,
                                   isExpanded: true,
                                   items: [
-                                    for (final model
-                                        in GeminiTranslationService
-                                            .availableModels)
+                                    for (final model in availableModels)
                                       DropdownMenuItem(
                                         value: model,
                                         child: Text(
-                                          GeminiTranslationService
-                                                  .modelDisplayNames[model] ??
-                                              model,
+                                          displayNames[model] ?? model,
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
                                   ],
                                   onChanged: (model) {
                                     if (model != null) {
-                                      _selectGeminiModel(model);
+                                      if (isGemini) {
+                                        _selectGeminiModel(model);
+                                      } else {
+                                        _selectChatGPTModel(model);
+                                      }
                                     }
                                   },
                                 ),
@@ -424,11 +490,11 @@ class _TranslatorSettingsViewState extends State<TranslatorSettingsView> {
                         if (_editing) ...[
                           const SizedBox(height: 18),
                           FilledButton(
-                            key: ValueKey(
-                              _selectedService == 0
-                                  ? 'save_google_api_key'
-                                  : 'save_gemini_api_key',
-                            ),
+                            key: ValueKey(switch (_selectedService) {
+                              0 => 'save_google_api_key',
+                              1 => 'save_gemini_api_key',
+                              _ => 'save_chatgpt_api_key',
+                            }),
                             onPressed: _saving ? null : _save,
                             child: Text(l10n.googleSaveSettings),
                           ),

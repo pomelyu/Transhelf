@@ -16,6 +16,10 @@ class SettingView extends StatelessWidget {
     required this.onGeminiApiKeyChanged,
     required this.geminiModel,
     required this.onGeminiModelChanged,
+    required this.chatGPTApiKey,
+    required this.onChatGPTApiKeyChanged,
+    required this.chatGPTModel,
+    required this.onChatGPTModelChanged,
     required this.onOpenPresets,
   });
 
@@ -27,6 +31,10 @@ class SettingView extends StatelessWidget {
   final Future<void> Function(String) onGeminiApiKeyChanged;
   final String geminiModel;
   final Future<void> Function(String) onGeminiModelChanged;
+  final String chatGPTApiKey;
+  final Future<void> Function(String) onChatGPTApiKeyChanged;
+  final String chatGPTModel;
+  final Future<void> Function(String) onChatGPTModelChanged;
   final Future<void> Function() onOpenPresets;
 
   @override
@@ -84,6 +92,10 @@ class SettingView extends StatelessWidget {
                       onGeminiApiKeyChanged: onGeminiApiKeyChanged,
                       geminiModel: geminiModel,
                       onGeminiModelChanged: onGeminiModelChanged,
+                      chatGPTApiKey: chatGPTApiKey,
+                      onChatGPTApiKeyChanged: onChatGPTApiKeyChanged,
+                      chatGPTModel: chatGPTModel,
+                      onChatGPTModelChanged: onChatGPTModelChanged,
                     ),
                   ),
                 ),

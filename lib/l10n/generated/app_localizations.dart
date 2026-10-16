@@ -752,6 +752,24 @@ abstract class AppLocalizations {
   /// **'Gemini 翻譯失敗'**
   String get geminiTranslationFailed;
 
+  /// No description provided for @chatGPTConfigureFirst.
+  ///
+  /// In zh, this message translates to:
+  /// **'請先設定 OpenAI API key。'**
+  String get chatGPTConfigureFirst;
+
+  /// No description provided for @chatGPTApiKeyInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'OpenAI API key 無效或未獲授權。'**
+  String get chatGPTApiKeyInvalid;
+
+  /// No description provided for @chatGPTTranslationFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'ChatGPT 翻譯失敗'**
+  String get chatGPTTranslationFailed;
+
   /// No description provided for @googleOpenSettings.
   ///
   /// In zh, this message translates to:

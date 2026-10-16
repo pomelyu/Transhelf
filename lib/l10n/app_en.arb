@@ -110,5 +110,8 @@
   "googleApiKeyInvalid": "API key is invalid or unauthorized. Update it in Settings.",
   "googleTranslationFailed": "Translation failed",
   "geminiTranslationFailed": "Gemini translation failed",
+  "chatGPTConfigureFirst": "Set your OpenAI API key first.",
+  "chatGPTApiKeyInvalid": "OpenAI API key is invalid or not authorized.",
+  "chatGPTTranslationFailed": "ChatGPT translation failed",
   "googleOpenSettings": "Open settings"
 }
