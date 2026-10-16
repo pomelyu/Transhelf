@@ -52,6 +52,18 @@ class Article {
     isPrivate: isPrivate,
   );
 
+  Article withPrivacy(bool value) => Article(
+    id: id,
+    title: title,
+    createdAt: createdAt,
+    sourceLanguage: sourceLanguage,
+    targetLanguage: targetLanguage,
+    service: service,
+    segments: segments,
+    progress: progress,
+    isPrivate: value,
+  );
+
   Map<String, Object?> toJson() => {
     'id': id,
     'title': title,

@@ -138,6 +138,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerRelaxedSpacing => 'Relaxed line spacing';
 
   @override
+  String get readerPrivateArticle => 'Private article';
+
+  @override
   String get shelfSearchHint => 'Search articles';
 
   @override
@@ -145,6 +148,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shelfShowPrivate => 'Show private';
+
+  @override
+  String get shelfPrivateTag => 'Private';
 
   @override
   String get shelfEmptyTitle => 'No articles yet';
@@ -183,6 +189,88 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsPrivatePin => 'Private article PIN';
+
+  @override
+  String get privatePinSet => 'Set PIN';
+
+  @override
+  String get privatePinChange => 'Change PIN';
+
+  @override
+  String get privatePinConfigured => 'Set';
+
+  @override
+  String get privatePinNotConfigured => 'Not set';
+
+  @override
+  String get privatePinStatusConfigured => 'Private article PIN is set';
+
+  @override
+  String get privatePinStatusNotConfigured => 'Private article PIN is not set';
+
+  @override
+  String get privatePinCancel => 'Cancel';
+
+  @override
+  String get privatePinSave => 'Save';
+
+  @override
+  String get privatePinCurrent => 'Current PIN';
+
+  @override
+  String get privatePinNew => 'New PIN';
+
+  @override
+  String get privatePinConfirm => 'Confirm new PIN';
+
+  @override
+  String get privatePinRequired => 'Enter a four-digit PIN.';
+
+  @override
+  String get privatePinMismatch => 'The PIN entries do not match.';
+
+  @override
+  String get privatePinIncorrect => 'The current PIN is incorrect.';
+
+  @override
+  String privatePinAttempts(int count, int limit) {
+    return 'Incorrect attempts: $count / $limit';
+  }
+
+  @override
+  String get privatePinSaved => 'PIN saved.';
+
+  @override
+  String get privatePinPrompt => 'Enter your PIN to show private articles.';
+
+  @override
+  String get privatePinPromptTitle => 'Unlock private articles';
+
+  @override
+  String get privatePinClose => 'Close PIN entry';
+
+  @override
+  String get privatePinDeleteDigit => 'Delete last digit';
+
+  @override
+  String privatePinEnteredCount(int count) {
+    return 'PIN digits entered: $count of 4';
+  }
+
+  @override
+  String get privatePinGoToSettings => 'Go to Settings';
+
+  @override
+  String get privatePinUnconfigured =>
+      'A PIN has not been set. Set a PIN in Settings first.';
+
+  @override
+  String get privatePinLockout =>
+      'Too many incorrect attempts. All private articles were deleted and the PIN was cleared.';
+
+  @override
+  String get privatePinLockoutDeleteFailed =>
+      'Could not delete all private articles. Try again.';
 
   @override
   String get settingsComingSoon => 'Coming soon';

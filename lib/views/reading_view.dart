@@ -16,10 +16,12 @@ class ReadingView extends StatefulWidget {
     super.key,
     required this.article,
     required this.onProgress,
+    required this.onPrivacyChanged,
   });
 
   final Article article;
   final Future<void> Function(double) onProgress;
+  final Future<void> Function(bool) onPrivacyChanged;
 
   @override
   State<ReadingView> createState() => _ReadingViewState();
@@ -34,6 +36,26 @@ class _ReadingViewState extends State<ReadingView> with WidgetsBindingObserver {
   bool _allowPop = false;
   bool _closing = false;
   late double _progress = widget.article.progress;
+  late bool _isPrivate = widget.article.isPrivate;
+  bool _savingPrivacy = false;
+
+  Future<void> _setPrivacy(bool value) async {
+    setState(() => _savingPrivacy = true);
+    try {
+      await widget.onPrivacyChanged(value);
+      if (mounted) setState(() => _isPrivate = value);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.articleSaveFailed),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _savingPrivacy = false);
+    }
+  }
 
   @override
   void initState() {
@@ -258,6 +280,30 @@ class _ReadingViewState extends State<ReadingView> with WidgetsBindingObserver {
               value: _relaxed,
               onChange: (value) => setState(() => _relaxed = value),
             ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n.readerPrivateArticle,
+                key: const ValueKey('reader_private_label'),
+                style: const TextStyle(fontSize: 13, color: AppPalette.muted),
+              ),
+            ),
+            if (_savingPrivacy)
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            else
+              FSwitch(
+                key: const ValueKey('reader_private_toggle'),
+                value: _isPrivate,
+                onChange: _setPrivacy,
+              ),
           ],
         ),
       ],

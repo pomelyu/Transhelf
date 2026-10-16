@@ -11,11 +11,15 @@ class ShelfView extends StatefulWidget {
   const ShelfView({
     super.key,
     required this.articles,
+    required this.showPrivateArticles,
+    required this.onPrivateModeChanged,
     required this.onOpen,
     required this.onDelete,
   });
 
   final List<Article> articles;
+  final bool showPrivateArticles;
+  final ValueChanged<bool> onPrivateModeChanged;
   final ValueChanged<Article> onOpen;
   final Future<void> Function(Article) onDelete;
 
@@ -31,7 +35,7 @@ class _ShelfViewState extends State<ShelfView> {
     final articles = widget.articles
         .where(
           (article) =>
-              !article.isPrivate &&
+              (!article.isPrivate || widget.showPrivateArticles) &&
               article.title.toLowerCase().contains(_query.trim().toLowerCase()),
         )
         .toList();
@@ -166,7 +170,11 @@ class _ShelfViewState extends State<ShelfView> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const FSwitch(value: false, enabled: false),
+                  FSwitch(
+                    key: const ValueKey('shelf_private_toggle'),
+                    value: widget.showPrivateArticles,
+                    onChange: widget.onPrivateModeChanged,
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -240,14 +248,45 @@ class _ShelfViewState extends State<ShelfView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      article.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            article.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        if (article.isPrivate) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            key: ValueKey('article_private_tag_${article.id}'),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0x1A8AA9FF),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: AppPalette.blue.withValues(alpha: .28),
+                              ),
+                            ),
+                            child: Semantics(
+                              label: l10n.shelfPrivateTag,
+                              child: const Icon(
+                                FLucideIcons.lockKeyhole,
+                                size: 13,
+                                color: AppPalette.blue,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 7),
                     Text(

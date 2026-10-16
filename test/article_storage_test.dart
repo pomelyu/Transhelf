@@ -43,4 +43,28 @@ void main() {
     await store.delete(article.id);
     expect(await store.load(), isEmpty);
   });
+
+  test('deletes private articles without affecting public articles', () async {
+    final directory = await Directory.systemTemp.createTemp('transhelf-test-');
+    addTearDown(() => directory.delete(recursive: true));
+    final store = ArticleStore(directory: () async => directory);
+    Article article(String id, bool isPrivate) => Article(
+      id: id,
+      title: id,
+      createdAt: DateTime.utc(2026, 10, 16),
+      sourceLanguage: 'en',
+      targetLanguage: 'zh-TW',
+      service: 'google',
+      isPrivate: isPrivate,
+      segments: const [ArticleSegment(source: 'Source.', translation: '譯文。')],
+    );
+
+    await store.save(article('public', false));
+    await store.save(article('private_one', true));
+    await store.save(article('private_two', true));
+    await store.deletePrivateArticles();
+
+    final remaining = await store.load();
+    expect(remaining.map((item) => item.id), ['public']);
+  });
 }

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import '../l10n/generated/app_localizations.dart';
+import '../services/private_pin_store.dart';
 import '../ui/app_palette.dart';
+import 'private_pin_settings_view.dart';
 import 'translator_settings_view.dart';
 
 class SettingView extends StatelessWidget {
@@ -20,6 +22,10 @@ class SettingView extends StatelessWidget {
     required this.onChatGPTApiKeyChanged,
     required this.chatGPTModel,
     required this.onChatGPTModelChanged,
+    required this.pinStore,
+    required this.pinConfigured,
+    required this.onPinSaved,
+    required this.onPinLockout,
     required this.onOpenPresets,
   });
 
@@ -35,6 +41,10 @@ class SettingView extends StatelessWidget {
   final Future<void> Function(String) onChatGPTApiKeyChanged;
   final String chatGPTModel;
   final Future<void> Function(String) onChatGPTModelChanged;
+  final PrivatePinStore pinStore;
+  final bool pinConfigured;
+  final VoidCallback onPinSaved;
+  final Future<void> Function() onPinLockout;
   final Future<void> Function() onOpenPresets;
 
   @override
@@ -141,14 +151,27 @@ class SettingView extends StatelessWidget {
             intrinsicWidth: true,
             children: [
               FTile(
+                key: const ValueKey('private_pin_settings'),
                 title: Text(l10n.settingsPrivatePin),
                 prefix: const Icon(
                   FLucideIcons.keyRound,
                   color: AppPalette.blue,
                 ),
-                suffix: Text(
-                  l10n.settingsComingSoon,
-                  style: const TextStyle(fontSize: 11, color: AppPalette.muted),
+                details: Text(
+                  key: const ValueKey('private_pin_configured_status'),
+                  pinConfigured
+                      ? l10n.privatePinConfigured
+                      : l10n.privatePinNotConfigured,
+                ),
+                suffix: const Icon(FLucideIcons.chevronRight, size: 16),
+                onPress: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(
+                    builder: (_) => PrivatePinSettingsView(
+                      pinStore: pinStore,
+                      onPinSaved: onPinSaved,
+                      onLockout: onPinLockout,
+                    ),
+                  ),
                 ),
               ),
             ],

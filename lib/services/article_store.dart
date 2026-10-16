@@ -50,6 +50,13 @@ class ArticleStore {
     if (await file.exists()) await file.delete();
   }
 
+  Future<void> deletePrivateArticles() async {
+    final articles = await load();
+    for (final article in articles.where((article) => article.isPrivate)) {
+      await delete(article.id);
+    }
+  }
+
   Future<File> _fileFor(String id) async {
     if (!RegExp(r'^[a-zA-Z0-9_-]+$').hasMatch(id)) {
       throw ArgumentError.value(id, 'id', 'Invalid article id');

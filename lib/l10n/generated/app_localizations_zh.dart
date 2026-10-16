@@ -138,6 +138,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get readerRelaxedSpacing => '寬鬆行距';
 
   @override
+  String get readerPrivateArticle => '私密文章';
+
+  @override
   String get shelfSearchHint => '搜尋文章';
 
   @override
@@ -145,6 +148,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get shelfShowPrivate => '顯示私密';
+
+  @override
+  String get shelfPrivateTag => '私密';
 
   @override
   String get shelfEmptyTitle => '還沒有文章';
@@ -181,6 +187,85 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsPrivatePin => '私密文章 PIN';
+
+  @override
+  String get privatePinSet => '設定 PIN';
+
+  @override
+  String get privatePinChange => '修改 PIN';
+
+  @override
+  String get privatePinConfigured => '已設定';
+
+  @override
+  String get privatePinNotConfigured => '尚未設定';
+
+  @override
+  String get privatePinStatusConfigured => '已設定 PIN 碼';
+
+  @override
+  String get privatePinStatusNotConfigured => '未設定 PIN 碼';
+
+  @override
+  String get privatePinCancel => '取消';
+
+  @override
+  String get privatePinSave => '儲存';
+
+  @override
+  String get privatePinCurrent => '目前 PIN';
+
+  @override
+  String get privatePinNew => '新 PIN';
+
+  @override
+  String get privatePinConfirm => '確認新 PIN';
+
+  @override
+  String get privatePinRequired => '請輸入四位數 PIN。';
+
+  @override
+  String get privatePinMismatch => '兩次輸入的 PIN 不一致。';
+
+  @override
+  String get privatePinIncorrect => '目前 PIN 錯誤。';
+
+  @override
+  String privatePinAttempts(int count, int limit) {
+    return '錯誤次數：$count / $limit';
+  }
+
+  @override
+  String get privatePinSaved => 'PIN 已儲存。';
+
+  @override
+  String get privatePinPrompt => '請輸入 PIN 以顯示私密文章。';
+
+  @override
+  String get privatePinPromptTitle => '解鎖私密文章';
+
+  @override
+  String get privatePinClose => '關閉 PIN 輸入';
+
+  @override
+  String get privatePinDeleteDigit => '刪除最後一位';
+
+  @override
+  String privatePinEnteredCount(int count) {
+    return '已輸入 $count / 4 位';
+  }
+
+  @override
+  String get privatePinGoToSettings => '前往設定';
+
+  @override
+  String get privatePinUnconfigured => '尚未設定 PIN，請先前往設定頁設定。';
+
+  @override
+  String get privatePinLockout => '錯誤次數過多，已刪除所有私密文章並清除 PIN。';
+
+  @override
+  String get privatePinLockoutDeleteFailed => '無法刪除所有私密文章，請再試一次。';
 
   @override
   String get settingsComingSoon => '即將推出';

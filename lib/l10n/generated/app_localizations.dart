@@ -350,6 +350,12 @@ abstract class AppLocalizations {
   /// **'寬鬆行距'**
   String get readerRelaxedSpacing;
 
+  /// No description provided for @readerPrivateArticle.
+  ///
+  /// In zh, this message translates to:
+  /// **'私密文章'**
+  String get readerPrivateArticle;
+
   /// No description provided for @shelfSearchHint.
   ///
   /// In zh, this message translates to:
@@ -367,6 +373,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'顯示私密'**
   String get shelfShowPrivate;
+
+  /// No description provided for @shelfPrivateTag.
+  ///
+  /// In zh, this message translates to:
+  /// **'私密'**
+  String get shelfPrivateTag;
 
   /// No description provided for @shelfEmptyTitle.
   ///
@@ -439,6 +451,156 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'私密文章 PIN'**
   String get settingsPrivatePin;
+
+  /// No description provided for @privatePinSet.
+  ///
+  /// In zh, this message translates to:
+  /// **'設定 PIN'**
+  String get privatePinSet;
+
+  /// No description provided for @privatePinChange.
+  ///
+  /// In zh, this message translates to:
+  /// **'修改 PIN'**
+  String get privatePinChange;
+
+  /// No description provided for @privatePinConfigured.
+  ///
+  /// In zh, this message translates to:
+  /// **'已設定'**
+  String get privatePinConfigured;
+
+  /// No description provided for @privatePinNotConfigured.
+  ///
+  /// In zh, this message translates to:
+  /// **'尚未設定'**
+  String get privatePinNotConfigured;
+
+  /// No description provided for @privatePinStatusConfigured.
+  ///
+  /// In zh, this message translates to:
+  /// **'已設定 PIN 碼'**
+  String get privatePinStatusConfigured;
+
+  /// No description provided for @privatePinStatusNotConfigured.
+  ///
+  /// In zh, this message translates to:
+  /// **'未設定 PIN 碼'**
+  String get privatePinStatusNotConfigured;
+
+  /// No description provided for @privatePinCancel.
+  ///
+  /// In zh, this message translates to:
+  /// **'取消'**
+  String get privatePinCancel;
+
+  /// No description provided for @privatePinSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'儲存'**
+  String get privatePinSave;
+
+  /// No description provided for @privatePinCurrent.
+  ///
+  /// In zh, this message translates to:
+  /// **'目前 PIN'**
+  String get privatePinCurrent;
+
+  /// No description provided for @privatePinNew.
+  ///
+  /// In zh, this message translates to:
+  /// **'新 PIN'**
+  String get privatePinNew;
+
+  /// No description provided for @privatePinConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'確認新 PIN'**
+  String get privatePinConfirm;
+
+  /// No description provided for @privatePinRequired.
+  ///
+  /// In zh, this message translates to:
+  /// **'請輸入四位數 PIN。'**
+  String get privatePinRequired;
+
+  /// No description provided for @privatePinMismatch.
+  ///
+  /// In zh, this message translates to:
+  /// **'兩次輸入的 PIN 不一致。'**
+  String get privatePinMismatch;
+
+  /// No description provided for @privatePinIncorrect.
+  ///
+  /// In zh, this message translates to:
+  /// **'目前 PIN 錯誤。'**
+  String get privatePinIncorrect;
+
+  /// No description provided for @privatePinAttempts.
+  ///
+  /// In zh, this message translates to:
+  /// **'錯誤次數：{count} / {limit}'**
+  String privatePinAttempts(int count, int limit);
+
+  /// No description provided for @privatePinSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'PIN 已儲存。'**
+  String get privatePinSaved;
+
+  /// No description provided for @privatePinPrompt.
+  ///
+  /// In zh, this message translates to:
+  /// **'請輸入 PIN 以顯示私密文章。'**
+  String get privatePinPrompt;
+
+  /// No description provided for @privatePinPromptTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'解鎖私密文章'**
+  String get privatePinPromptTitle;
+
+  /// No description provided for @privatePinClose.
+  ///
+  /// In zh, this message translates to:
+  /// **'關閉 PIN 輸入'**
+  String get privatePinClose;
+
+  /// No description provided for @privatePinDeleteDigit.
+  ///
+  /// In zh, this message translates to:
+  /// **'刪除最後一位'**
+  String get privatePinDeleteDigit;
+
+  /// No description provided for @privatePinEnteredCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'已輸入 {count} / 4 位'**
+  String privatePinEnteredCount(int count);
+
+  /// No description provided for @privatePinGoToSettings.
+  ///
+  /// In zh, this message translates to:
+  /// **'前往設定'**
+  String get privatePinGoToSettings;
+
+  /// No description provided for @privatePinUnconfigured.
+  ///
+  /// In zh, this message translates to:
+  /// **'尚未設定 PIN，請先前往設定頁設定。'**
+  String get privatePinUnconfigured;
+
+  /// No description provided for @privatePinLockout.
+  ///
+  /// In zh, this message translates to:
+  /// **'錯誤次數過多，已刪除所有私密文章並清除 PIN。'**
+  String get privatePinLockout;
+
+  /// No description provided for @privatePinLockoutDeleteFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'無法刪除所有私密文章，請再試一次。'**
+  String get privatePinLockoutDeleteFailed;
 
   /// No description provided for @settingsComingSoon.
   ///

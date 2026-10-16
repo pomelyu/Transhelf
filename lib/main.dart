@@ -12,6 +12,7 @@ import 'services/google_translation_service.dart';
 import 'services/gemini_translation_service.dart';
 import 'services/chatgpt_translation_service.dart';
 import 'services/preset_store.dart';
+import 'services/private_pin_store.dart';
 import 'ui/app_palette.dart';
 import 'views/reading_view.dart';
 import 'views/preset_list_view.dart';
@@ -217,7 +218,11 @@ class _MainShellState extends State<MainShell> {
   int _index = 0;
   late final ArticleStore _articleStore = widget.articleStore ?? ArticleStore();
   late final PresetStore _presetStore = PresetStore(widget.preferences);
+  late final PrivatePinStore _privatePinStore = PrivatePinStore(
+    widget.preferences,
+  );
   List<Article> _articles = [];
+  bool _showPrivateArticles = false;
 
   @override
   void initState() {
@@ -259,7 +264,27 @@ class _MainShellState extends State<MainShell> {
   }
 
   Future<void> _saveProgress(Article article, double progress) async {
-    final updated = article.withProgress(progress);
+    final latestArticle = _articles.firstWhere(
+      (item) => item.id == article.id,
+      orElse: () => article,
+    );
+    final updated = latestArticle.withProgress(progress);
+    await _articleStore.save(updated);
+    if (mounted) {
+      setState(
+        () => _articles = _articles
+            .map((item) => item.id == updated.id ? updated : item)
+            .toList(),
+      );
+    }
+  }
+
+  Future<void> _saveArticlePrivacy(Article article, bool isPrivate) async {
+    final latestArticle = _articles.firstWhere(
+      (item) => item.id == article.id,
+      orElse: () => article,
+    );
+    final updated = latestArticle.withPrivacy(isPrivate);
     await _articleStore.save(updated);
     if (mounted) {
       setState(
@@ -288,14 +313,314 @@ class _MainShellState extends State<MainShell> {
   }
 
   void _openArticle(Article article) {
-    Navigator.of(context).push(
+    Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
         builder: (_) => ReadingView(
           article: article,
           onProgress: (progress) => _saveProgress(article, progress),
+          onPrivacyChanged: (isPrivate) =>
+              _saveArticlePrivacy(article, isPrivate),
         ),
       ),
     );
+  }
+
+  Future<void> _setPrivateMode(bool showPrivate) async {
+    if (!showPrivate) {
+      setState(() => _showPrivateArticles = false);
+      return;
+    }
+    if (!_privatePinStore.isConfigured) {
+      final l10n = AppLocalizations.of(context)!;
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          key: const ValueKey('private_pin_unconfigured_dialog'),
+          title: Text(l10n.settingsPrivatePin),
+          content: Text(l10n.privatePinUnconfigured),
+          actions: [
+            TextButton(
+              key: const ValueKey('private_pin_go_to_settings'),
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(l10n.privatePinGoToSettings),
+            ),
+          ],
+        ),
+      );
+      if (mounted) {
+        setState(() {
+          _showPrivateArticles = false;
+          _index = 2;
+        });
+      }
+      return;
+    }
+    final unlocked = await _requestPrivatePin();
+    if (unlocked && mounted) {
+      setState(() => _showPrivateArticles = true);
+    }
+  }
+
+  Future<bool> _requestPrivatePin() async {
+    final l10n = AppLocalizations.of(context)!;
+    var pin = '';
+    var incorrect = false;
+    var checking = false;
+    var lockout = false;
+    var cleanupFailed = false;
+
+    Future<void> submit(StateSetter update, BuildContext dialogContext) async {
+      if (pin.length != 4 || checking) return;
+      update(() => checking = true);
+      final result = await _privatePinStore.verify(pin);
+      if (result == PinVerificationResult.correct) {
+        if (dialogContext.mounted) Navigator.pop(dialogContext, true);
+      } else if (result == PinVerificationResult.incorrect) {
+        update(() {
+          checking = false;
+          incorrect = true;
+          pin = '';
+        });
+      } else if (result == PinVerificationResult.limitReached) {
+        lockout = true;
+        try {
+          await _handlePinLockout();
+        } catch (_) {
+          update(() {
+            checking = false;
+            cleanupFailed = true;
+            pin = '';
+          });
+          return;
+        }
+        if (dialogContext.mounted) Navigator.pop(dialogContext, false);
+      } else if (dialogContext.mounted) {
+        Navigator.pop(dialogContext, false);
+      }
+    }
+
+    void enterDigit(
+      String digit,
+      StateSetter update,
+      BuildContext dialogContext,
+    ) {
+      if (checking || pin.length >= 4) return;
+      update(() {
+        pin += digit;
+        incorrect = false;
+        cleanupFailed = false;
+      });
+      if (pin.length == 4) submit(update, dialogContext);
+    }
+
+    final unlocked = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, update) => Dialog(
+          key: const ValueKey('private_pin_unlock_dialog'),
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            width: 340,
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            decoration: BoxDecoration(
+              color: AppPalette.surface,
+              border: Border.all(color: AppPalette.border),
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: IconButton(
+                    key: const ValueKey('private_pin_unlock_cancel'),
+                    tooltip: l10n.privatePinClose,
+                    onPressed: checking
+                        ? null
+                        : () => Navigator.pop(dialogContext, false),
+                    icon: const Icon(FLucideIcons.x, size: 19),
+                  ),
+                ),
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: AppPalette.surfaceRaised,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    FLucideIcons.lockKeyhole,
+                    color: AppPalette.blue,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(height: 13),
+                Text(
+                  l10n.privatePinPromptTitle,
+                  key: const ValueKey('private_pin_unlock_title'),
+                  style: const TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  l10n.privatePinPrompt,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 12, color: AppPalette.muted),
+                ),
+                const SizedBox(height: 17),
+                Semantics(
+                  key: const ValueKey('private_pin_unlock_dots'),
+                  label: l10n.privatePinEnteredCount(pin.length),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      4,
+                      (index) => Container(
+                        key: ValueKey('private_pin_dot_$index'),
+                        width: 13,
+                        height: 13,
+                        margin: const EdgeInsets.symmetric(horizontal: 8),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: pin.length > index
+                              ? AppPalette.blue
+                              : AppPalette.border,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (incorrect)
+                  Text(
+                    l10n.privatePinIncorrect,
+                    key: const ValueKey('private_pin_unlock_error'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.redAccent,
+                      fontSize: 12,
+                    ),
+                  ),
+                if (cleanupFailed)
+                  Text(
+                    l10n.privatePinLockoutDeleteFailed,
+                    key: const ValueKey('private_pin_cleanup_error'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.redAccent,
+                      fontSize: 12,
+                    ),
+                  ),
+                Text(
+                  l10n.privatePinAttempts(
+                    _privatePinStore.failedAttempts,
+                    PrivatePinStore.failedAttemptLimit,
+                  ),
+                  key: const ValueKey('private_pin_unlock_attempts'),
+                  style: const TextStyle(color: AppPalette.muted, fontSize: 11),
+                ),
+                const SizedBox(height: 12),
+                GridView.count(
+                  key: const ValueKey('private_pin_keypad'),
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 7,
+                  crossAxisSpacing: 7,
+                  childAspectRatio: 1.55,
+                  children: [
+                    for (final digit in const [
+                      '1',
+                      '2',
+                      '3',
+                      '4',
+                      '5',
+                      '6',
+                      '7',
+                      '8',
+                      '9',
+                      '',
+                      '0',
+                      'back',
+                    ])
+                      if (digit.isEmpty)
+                        const SizedBox.shrink()
+                      else if (digit == 'back')
+                        IconButton.filledTonal(
+                          key: const ValueKey('private_pin_key_backspace'),
+                          tooltip: l10n.privatePinDeleteDigit,
+                          onPressed: checking
+                              ? null
+                              : () => update(() {
+                                  if (pin.isNotEmpty) {
+                                    pin = pin.substring(0, pin.length - 1);
+                                  }
+                                  incorrect = false;
+                                  cleanupFailed = false;
+                                }),
+                          icon: const Icon(FLucideIcons.arrowLeft, size: 20),
+                        )
+                      else
+                        FilledButton.tonal(
+                          key: ValueKey('private_pin_key_$digit'),
+                          onPressed: checking
+                              ? null
+                              : () => enterDigit(digit, update, dialogContext),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppPalette.surfaceRaised,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                          child: Text(
+                            digit,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    if (lockout && mounted) {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          key: const ValueKey('private_pin_lockout_dialog'),
+          content: Text(l10n.privatePinLockout),
+          actions: [
+            TextButton(
+              key: const ValueKey('private_pin_lockout_dismiss'),
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(l10n.articleCancel),
+            ),
+          ],
+        ),
+      );
+    }
+    return unlocked == true;
+  }
+
+  Future<void> _handlePinLockout() async {
+    await _articleStore.deletePrivateArticles();
+    await _privatePinStore.clearPin();
+    if (mounted) {
+      setState(() {
+        _articles = _articles.where((article) => !article.isPrivate).toList();
+        _showPrivateArticles = false;
+      });
+    }
   }
 
   @override
@@ -312,7 +637,10 @@ class _MainShellState extends State<MainShell> {
           ),
         ),
         index: _index,
-        onChange: (index) => setState(() => _index = index),
+        onChange: (index) => setState(() {
+          _index = index;
+          _showPrivateArticles = false;
+        }),
         children: [
           FBottomNavigationBarItem(
             key: const ValueKey('nav.translate'),
@@ -351,6 +679,8 @@ class _MainShellState extends State<MainShell> {
           ShelfView(
             key: const ValueKey('view.shelf'),
             articles: _articles,
+            showPrivateArticles: _showPrivateArticles,
+            onPrivateModeChanged: _setPrivateMode,
             onOpen: _openArticle,
             onDelete: _deleteArticle,
           ),
@@ -368,6 +698,12 @@ class _MainShellState extends State<MainShell> {
             onChatGPTApiKeyChanged: widget.onChatGPTApiKeyChanged,
             chatGPTModel: widget.chatGPTModel,
             onChatGPTModelChanged: widget.onChatGPTModelChanged,
+            pinStore: _privatePinStore,
+            pinConfigured: _privatePinStore.isConfigured,
+            onPinSaved: () {
+              if (mounted) setState(() {});
+            },
+            onPinLockout: _handlePinLockout,
             onOpenPresets: _openPresetManager,
           ),
         ],
