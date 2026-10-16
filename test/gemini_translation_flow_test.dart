@@ -79,7 +79,9 @@ void main() {
       find.byKey(const ValueKey('translate_input')),
       source,
     );
-    tester.testTextInput.hide();
+    FocusScope.of(tester.element(find.byKey(const ValueKey('translate_input'))))
+        .unfocus();
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('engine_dropdown')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Gemini'));

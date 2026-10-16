@@ -49,6 +49,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get translateClearSource => '清除原文';
 
   @override
+  String get translateDismissKeyboard => '收起鍵盤';
+
+  @override
   String get translateCopy => '複製翻譯';
 
   @override

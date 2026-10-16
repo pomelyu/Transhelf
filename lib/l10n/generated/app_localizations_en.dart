@@ -49,6 +49,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get translateClearSource => 'Clear source';
 
   @override
+  String get translateDismissKeyboard => 'Hide keyboard';
+
+  @override
   String get translateCopy => 'Copy translation';
 
   @override

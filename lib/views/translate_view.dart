@@ -48,6 +48,7 @@ class TranslateView extends StatefulWidget {
 class _TranslateViewState extends State<TranslateView> {
   final _source = TextEditingController();
   final _translation = TextEditingController();
+  final _sourceFocus = FocusNode();
   final _translationFocus = FocusNode();
   late final GoogleTranslationService _service =
       widget.service ?? GoogleTranslationService();
@@ -69,6 +70,9 @@ class _TranslateViewState extends State<TranslateView> {
   bool _editingResult = false;
   int _translationEpoch = 0;
   List<ArticleSegment> _translatedSegments = [];
+
+  bool get _isEditingText =>
+      _sourceFocus.hasFocus || (_editingResult && _translationFocus.hasFocus);
 
   TranslationPreset get _selectedPreset => _presetLibrary.presets.firstWhere(
     (preset) => preset.id == _selectedPresetId,
@@ -187,7 +191,16 @@ class _TranslateViewState extends State<TranslateView> {
   @override
   void initState() {
     super.initState();
+    _sourceFocus.addListener(_handleFocusChange);
+    _translationFocus.addListener(_handleFocusChange);
     _loadPresets();
+  }
+
+  void _handleFocusChange() {
+    if (!mounted) return;
+    setState(() {
+      if (_isEditingText) _error = null;
+    });
   }
 
   Future<void> _loadPresets() async {
@@ -207,6 +220,7 @@ class _TranslateViewState extends State<TranslateView> {
   void dispose() {
     _source.dispose();
     _translation.dispose();
+    _sourceFocus.dispose();
     _translationFocus.dispose();
     super.dispose();
   }
@@ -523,182 +537,229 @@ class _TranslateViewState extends State<TranslateView> {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: _panelDecoration,
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        _engineDropdown(l10n),
-                        const SizedBox(width: 8),
-                        _presetDropdown(l10n),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        _choice(
-                          '',
-                          _languageName(l10n, _sourceLanguage),
-                          onTap: () => _pickLanguage(true),
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8),
-                          child: Icon(
-                            FLucideIcons.arrowLeftRight,
-                            size: 18,
-                            color: AppPalette.muted,
-                          ),
-                        ),
-                        _choice(
-                          '',
-                          _languageName(l10n, _targetLanguage),
-                          onTap: () => _pickLanguage(false),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              Container(
-                height: 42,
-                decoration: _panelDecoration,
-                child: Row(
-                  children: [
-                    _tab(
-                      l10n.translateSource,
-                      !_showResult,
-                      () => setState(() => _showResult = false),
-                      key: const ValueKey('translate_source_tab'),
-                    ),
-                    _tab(
-                      l10n.translateResult,
-                      _showResult,
-                      () => setState(() => _showResult = true),
-                      key: const ValueKey('translate_result_tab'),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(16),
+              SizedBox(height: _isEditingText ? 10 : 20),
+              if (!_isEditingText) ...[
+                Container(
+                  padding: const EdgeInsets.all(8),
                   decoration: _panelDecoration,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          Expanded(
-                            child: Text(
-                              _showResult
-                                  ? '$engineName · ${l10n.translateResult}'
-                                  : '${_source.text.length} ${l10n.translateCharacters}',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: AppPalette.muted,
-                              ),
-                            ),
-                          ),
-                          if (_showResult) ...[
-                            _toolbarButton(
-                              key: const ValueKey('copy_translation_button'),
-                              icon: FLucideIcons.copy,
-                              tooltip: l10n.translateCopy,
-                              onPressed: _translation.text.isEmpty
-                                  ? null
-                                  : _copyTranslation,
-                            ),
-                            _toolbarButton(
-                              key: const ValueKey('retranslate_button'),
-                              icon: FLucideIcons.refreshCw,
-                              tooltip: l10n.translateAgain,
-                              onPressed: _busy ? null : _translate,
-                            ),
-                            _toolbarButton(
-                              key: const ValueKey('edit_translation_button'),
-                              icon: _editingResult
-                                  ? FLucideIcons.check
-                                  : FLucideIcons.pencil,
-                              tooltip: _editingResult
-                                  ? l10n.translateFinishEditing
-                                  : l10n.translateEdit,
-                              onPressed: _translation.text.isEmpty
-                                  ? null
-                                  : _toggleResultEditing,
-                            ),
-                          ] else ...[
-                            if (_selectedEngine > 0)
-                              _toolbarButton(
-                                key: const ValueKey('gemini_prompt_preview'),
-                                icon: FLucideIcons.eye,
-                                tooltip: l10n.presetPromptPreview,
-                                onPressed: _showPromptPreview,
-                              ),
-                            _toolbarButton(
-                              key: const ValueKey('clear_source_button'),
-                              icon: FLucideIcons.x,
-                              tooltip: l10n.translateClearSource,
-                              onPressed: _source.text.isEmpty
-                                  ? null
-                                  : _clearSource,
-                            ),
-                          ],
+                          _engineDropdown(l10n),
+                          const SizedBox(width: 8),
+                          _presetDropdown(l10n),
                         ],
                       ),
-                      const Divider(height: 22, color: AppPalette.border),
-                      Expanded(
-                        child: _showResult
-                            ? TextField(
-                                key: const ValueKey('translate_output'),
-                                controller: _translation,
-                                focusNode: _translationFocus,
-                                readOnly: !_editingResult,
-                                onChanged: (_) => setState(() {}),
-                                maxLines: null,
-                                expands: true,
-                                textAlignVertical: TextAlignVertical.top,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  height: 1.5,
-                                ),
-                                decoration: InputDecoration.collapsed(
-                                  hintText: l10n.translateOutputHint,
-                                ),
-                              )
-                            : TextField(
-                                key: const ValueKey('translate_input'),
-                                controller: _source,
-                                onChanged: (_) => setState(() {
-                                  _translationEpoch++;
-                                  _translatedSegments = [];
-                                  _error = null;
-                                  _busy = false;
-                                  if (_source.text.trim().isEmpty) {
-                                    _translation.clear();
-                                    _hasTranslated = false;
-                                    _editingResult = false;
-                                  }
-                                }),
-                                maxLines: null,
-                                expands: true,
-                                textAlignVertical: TextAlignVertical.top,
-                                decoration: InputDecoration.collapsed(
-                                  hintText: l10n.translateInputHint,
-                                ),
-                              ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          _choice(
+                            '',
+                            _languageName(l10n, _sourceLanguage),
+                            onTap: () => _pickLanguage(true),
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8),
+                            child: Icon(
+                              FLucideIcons.arrowLeftRight,
+                              size: 18,
+                              color: AppPalette.muted,
+                            ),
+                          ),
+                          _choice(
+                            '',
+                            _languageName(l10n, _targetLanguage),
+                            onTap: () => _pickLanguage(false),
+                          ),
+                        ],
                       ),
                     ],
                   ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  height: 42,
+                  decoration: _panelDecoration,
+                  child: Row(
+                    children: [
+                      _tab(
+                        l10n.translateSource,
+                        !_showResult,
+                        () => setState(() => _showResult = false),
+                        key: const ValueKey('translate_source_tab'),
+                      ),
+                      _tab(
+                        l10n.translateResult,
+                        _showResult,
+                        () => setState(() => _showResult = true),
+                        key: const ValueKey('translate_result_tab'),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final constrainedWhileEditing =
+                        _isEditingText && constraints.maxHeight < 110;
+                    final verticalPadding = _isEditingText
+                        ? (constrainedWhileEditing ? 0.0 : 8.0)
+                        : 16.0;
+                    final toolbarExtent = constrainedWhileEditing ? 24.0 : null;
+                    return Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: verticalPadding,
+                      ),
+                      decoration: _panelDecoration,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  _showResult
+                                      ? '$engineName · ${l10n.translateResult}'
+                                      : '${_source.text.length} ${l10n.translateCharacters}',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: AppPalette.muted,
+                                  ),
+                                ),
+                              ),
+                              if (_showResult) ...[
+                                _toolbarButton(
+                                  key: const ValueKey(
+                                    'copy_translation_button',
+                                  ),
+                                  icon: FLucideIcons.copy,
+                                  tooltip: l10n.translateCopy,
+                                  compact: _isEditingText,
+                                  extent: toolbarExtent,
+                                  onPressed: _translation.text.isEmpty
+                                      ? null
+                                      : _copyTranslation,
+                                ),
+                                _toolbarButton(
+                                  key: const ValueKey('retranslate_button'),
+                                  icon: FLucideIcons.refreshCw,
+                                  tooltip: l10n.translateAgain,
+                                  compact: _isEditingText,
+                                  extent: toolbarExtent,
+                                  onPressed: _busy ? null : _translate,
+                                ),
+                                _toolbarButton(
+                                  key: const ValueKey(
+                                    'edit_translation_button',
+                                  ),
+                                  icon: _editingResult
+                                      ? FLucideIcons.check
+                                      : FLucideIcons.pencil,
+                                  tooltip: _editingResult
+                                      ? l10n.translateFinishEditing
+                                      : l10n.translateEdit,
+                                  compact: _isEditingText,
+                                  extent: toolbarExtent,
+                                  onPressed: _translation.text.isEmpty
+                                      ? null
+                                      : _toggleResultEditing,
+                                ),
+                                if (_isEditingText)
+                                  _dismissKeyboardButton(l10n),
+                              ] else ...[
+                                if (_selectedEngine > 0)
+                                  _toolbarButton(
+                                    key: const ValueKey(
+                                      'gemini_prompt_preview',
+                                    ),
+                                    icon: FLucideIcons.eye,
+                                    tooltip: l10n.presetPromptPreview,
+                                    compact: _isEditingText,
+                                    extent: toolbarExtent,
+                                    onPressed: _showPromptPreview,
+                                  ),
+                                _toolbarButton(
+                                  key: const ValueKey('clear_source_button'),
+                                  icon: FLucideIcons.x,
+                                  tooltip: l10n.translateClearSource,
+                                  compact: _isEditingText,
+                                  extent: toolbarExtent,
+                                  onPressed: _source.text.isEmpty
+                                      ? null
+                                      : _clearSource,
+                                ),
+                                if (_isEditingText)
+                                  _dismissKeyboardButton(
+                                    l10n,
+                                    extent: toolbarExtent,
+                                  ),
+                              ],
+                            ],
+                          ),
+                          Divider(
+                            height: constrainedWhileEditing
+                                ? 0
+                                : _isEditingText
+                                ? 10
+                                : 22,
+                            color: AppPalette.border,
+                          ),
+                          Expanded(
+                            child: _showResult
+                                ? TextField(
+                                    key: const ValueKey('translate_output'),
+                                    controller: _translation,
+                                    focusNode: _translationFocus,
+                                    readOnly: !_editingResult,
+                                    onChanged: (_) => setState(() {}),
+                                    maxLines: null,
+                                    expands: true,
+                                    textAlignVertical: TextAlignVertical.top,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      height: 1.5,
+                                    ),
+                                    decoration: InputDecoration.collapsed(
+                                      hintText: l10n.translateOutputHint,
+                                    ),
+                                  )
+                                : TextField(
+                                    key: const ValueKey('translate_input'),
+                                    controller: _source,
+                                    focusNode: _sourceFocus,
+                                    onChanged: (_) => setState(() {
+                                      _translationEpoch++;
+                                      _translatedSegments = [];
+                                      _error = null;
+                                      _busy = false;
+                                      if (_source.text.trim().isEmpty) {
+                                        _translation.clear();
+                                        _hasTranslated = false;
+                                        _editingResult = false;
+                                      }
+                                    }),
+                                    maxLines: null,
+                                    expands: true,
+                                    textAlignVertical: TextAlignVertical.top,
+                                    decoration: InputDecoration.collapsed(
+                                      hintText: l10n.translateInputHint,
+                                    ),
+                                  ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ),
               if (_error != null) ...[
                 const SizedBox(height: 8),
                 Text(
+                  key: const ValueKey('translate_error'),
                   _error!,
                   style: const TextStyle(color: Colors.redAccent, fontSize: 12),
                 ),
@@ -760,15 +821,30 @@ class _TranslateViewState extends State<TranslateView> {
     required IconData icon,
     required String tooltip,
     required VoidCallback? onPressed,
+    bool compact = false,
+    double? extent,
   }) => IconButton(
     key: key,
     tooltip: tooltip,
     onPressed: onPressed,
     visualDensity: VisualDensity.compact,
-    constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+    constraints: BoxConstraints(
+      minWidth: extent ?? (compact ? 32 : 36),
+      minHeight: extent ?? (compact ? 32 : 36),
+    ),
     padding: EdgeInsets.zero,
     icon: Icon(icon, size: 18),
   );
+
+  Widget _dismissKeyboardButton(AppLocalizations l10n, {double? extent}) =>
+      _toolbarButton(
+        key: const ValueKey('dismiss_translate_keyboard_button'),
+        icon: FLucideIcons.keyboardOff,
+        tooltip: l10n.translateDismissKeyboard,
+        compact: true,
+        extent: extent,
+        onPressed: () => FocusScope.of(context).unfocus(),
+      );
 
   Widget _engineDropdown(AppLocalizations l10n) => Expanded(
     child: PopupMenuButton<int>(

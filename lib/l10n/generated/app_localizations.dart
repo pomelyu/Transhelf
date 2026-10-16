@@ -176,6 +176,12 @@ abstract class AppLocalizations {
   /// **'清除原文'**
   String get translateClearSource;
 
+  /// No description provided for @translateDismissKeyboard.
+  ///
+  /// In zh, this message translates to:
+  /// **'收起鍵盤'**
+  String get translateDismissKeyboard;
+
   /// No description provided for @translateCopy.
   ///
   /// In zh, this message translates to:

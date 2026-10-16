@@ -40,6 +40,25 @@ void main() {
         translationService: service,
       ),
     );
+    await tester.tap(find.byKey(const ValueKey('translate_button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('translate_error')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('translate_input')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('translate_error')), findsNothing);
+    expect(find.byKey(const ValueKey('engine_dropdown')), findsNothing);
+    expect(find.byKey(const ValueKey('translate_source_tab')), findsNothing);
+    expect(
+      find.byKey(const ValueKey('dismiss_translate_keyboard_button')),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('dismiss_translate_keyboard_button')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('engine_dropdown')), findsOneWidget);
+    expect(find.byKey(const ValueKey('translate_source_tab')), findsOneWidget);
+
     await tester.enterText(
       find.byKey(const ValueKey('translate_input')),
       'This sentence has enough letters.',
