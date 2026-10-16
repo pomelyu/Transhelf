@@ -182,9 +182,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsPrivacySection => 'Privacy';
 
   @override
-  String get settingsAutosave => 'Save translations automatically';
-
-  @override
   String get settingsPrivatePin => 'Private article PIN';
 
   @override

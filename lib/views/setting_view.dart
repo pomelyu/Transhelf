@@ -141,11 +141,6 @@ class SettingView extends StatelessWidget {
             intrinsicWidth: true,
             children: [
               FTile(
-                title: Text(l10n.settingsAutosave),
-                prefix: const Icon(FLucideIcons.save, color: AppPalette.blue),
-                suffix: const FSwitch(value: true, enabled: false),
-              ),
-              FTile(
                 title: Text(l10n.settingsPrivatePin),
                 prefix: const Icon(
                   FLucideIcons.keyRound,

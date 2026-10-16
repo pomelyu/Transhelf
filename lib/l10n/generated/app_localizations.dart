@@ -434,12 +434,6 @@ abstract class AppLocalizations {
   /// **'隱私'**
   String get settingsPrivacySection;
 
-  /// No description provided for @settingsAutosave.
-  ///
-  /// In zh, this message translates to:
-  /// **'自動儲存翻譯'**
-  String get settingsAutosave;
-
   /// No description provided for @settingsPrivatePin.
   ///
   /// In zh, this message translates to:

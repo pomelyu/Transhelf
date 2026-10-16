@@ -180,9 +180,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsPrivacySection => '隱私';
 
   @override
-  String get settingsAutosave => '自動儲存翻譯';
-
-  @override
   String get settingsPrivatePin => '私密文章 PIN';
 
   @override
