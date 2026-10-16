@@ -62,22 +62,50 @@ class SettingView extends StatelessWidget {
           const SizedBox(height: 24),
           Container(
             height: 76,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
             decoration: BoxDecoration(
               color: AppPalette.surfaceRaised,
               border: Border.all(color: AppPalette.border),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Row(
               children: [
-                const Text(
-                  'Transhelf',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                Container(
+                  width: 48,
+                  height: 48,
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.white, width: 1.5),
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.asset(
+                      'ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 5),
-                Text(
-                  l10n.settingsTagline,
-                  style: const TextStyle(fontSize: 11, color: AppPalette.muted),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Transhelf',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        l10n.settingsTagline,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppPalette.muted,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
