@@ -1,17 +1,26 @@
-# transhelf
+# Transhelf
 
-A new Flutter project.
+Transhelf 是以 Flutter 和 Forui 打造的手機翻譯與閱讀應用程式。使用者可以選擇翻譯服務與語言，翻譯文字後儲存成文章，並在閱讀器中繼續閱讀。
 
-## Getting Started
+## 功能
 
-This project is a starting point for a Flutter application.
+- 支援繁體中文與英文介面，可在設定中切換。
+- 提供 Google 翻譯、Gemini 與 ChatGPT 翻譯服務；可設定 API Key，並為 Gemini 和 ChatGPT 選擇模型。
+- 可建立、編輯、複製及管理翻譯 Preset，包含自訂提示詞與詞彙表，並設定預設 Preset。
+- 提供提示詞預覽，將提示詞、詞彙表、語言與待翻譯文章組合顯示。
+- 可將原文與譯文儲存為文章，依標題搜尋、排序、刪除及管理文章。
+- 文章以 JSON 檔案儲存在應用程式的文件目錄；Preset 與應用程式設定則儲存在 SharedPreferences。
+- 內建閱讀器，支援調整字體大小、行距及閱讀進度。
+- 可設定四位數 PIN，解鎖並顯示私密文章；閱讀器也可將文章上鎖或解鎖。PIN 連續輸入錯誤達上限時會刪除私密文章並清除 PIN。
 
-A few resources to get you started if this is your first Flutter project:
+## 開發環境
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- Flutter / Dart
+- Forui
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+安裝相依套件並啟動應用程式：
+
+```sh
+flutter pub get
+flutter run
+```
