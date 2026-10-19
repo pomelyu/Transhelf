@@ -304,6 +304,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get presetPrompt => '自訂提示詞';
 
   @override
+  String get presetLlmSegmentation => 'LLM 分段';
+
+  @override
   String get presetPromptPreview => '提示詞預覽';
 
   @override
@@ -431,6 +434,19 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get chatGPTTranslationFailed => 'ChatGPT 翻譯失敗';
+
+  @override
+  String get translateLlmSegmentationInvalid =>
+      'LLM 分段回應格式無效，請重試或關閉「LLM 分段」後再翻譯。';
+
+  @override
+  String translateLlmSegmentationFailed(Object error) {
+    return 'LLM 分段翻譯失敗：$error';
+  }
+
+  @override
+  String get translateLlmSegmentationRequestFailed =>
+      'LLM 分段翻譯請求失敗，請稍後再試或關閉「LLM 分段」後重試。';
 
   @override
   String get googleOpenSettings => '前往設定';

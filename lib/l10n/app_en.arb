@@ -104,6 +104,7 @@
   "presetName": "Name",
   "presetNameHint": "For example: Academic papers",
   "presetPrompt": "Custom prompt",
+  "presetLlmSegmentation": "LLM segmentation",
   "presetPromptPreview": "Prompt preview",
   "presetPromptHint": "Translate the article using the glossary while preserving technical terms and names.",
   "presetGlossary": "Custom glossary",
@@ -147,5 +148,13 @@
   "chatGPTConfigureFirst": "Set your OpenAI API key first.",
   "chatGPTApiKeyInvalid": "OpenAI API key is invalid or not authorized.",
   "chatGPTTranslationFailed": "ChatGPT translation failed",
+  "translateLlmSegmentationInvalid": "The LLM segmentation response is invalid. Try again or turn off LLM segmentation and retry.",
+  "translateLlmSegmentationFailed": "LLM segmentation translation failed: {error}",
+  "@translateLlmSegmentationFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "translateLlmSegmentationRequestFailed": "LLM segmentation request failed. Try again later or turn off LLM segmentation and retry.",
   "googleOpenSettings": "Open settings"
 }

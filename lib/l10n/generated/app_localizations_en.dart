@@ -309,6 +309,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get presetPrompt => 'Custom prompt';
 
   @override
+  String get presetLlmSegmentation => 'LLM segmentation';
+
+  @override
   String get presetPromptPreview => 'Prompt preview';
 
   @override
@@ -440,6 +443,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chatGPTTranslationFailed => 'ChatGPT translation failed';
+
+  @override
+  String get translateLlmSegmentationInvalid =>
+      'The LLM segmentation response is invalid. Try again or turn off LLM segmentation and retry.';
+
+  @override
+  String translateLlmSegmentationFailed(Object error) {
+    return 'LLM segmentation translation failed: $error';
+  }
+
+  @override
+  String get translateLlmSegmentationRequestFailed =>
+      'LLM segmentation request failed. Try again later or turn off LLM segmentation and retry.';
 
   @override
   String get googleOpenSettings => 'Open settings';

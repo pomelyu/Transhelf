@@ -29,12 +29,14 @@ class TranslationPreset {
     required this.name,
     required this.prompt,
     this.glossary = const [],
+    this.llmSegmentationEnabled = false,
   });
 
   final String id;
   final String name;
   final String prompt;
   final List<PresetGlossaryEntry> glossary;
+  final bool llmSegmentationEnabled;
 
   static const fallbackId = 'default_translation';
   static const fallbackPrompt =
@@ -50,7 +52,18 @@ class TranslationPreset {
     'name': name,
     'prompt': prompt,
     'glossary': glossary.map((entry) => entry.toJson()).toList(),
+    'llmSegmentationEnabled': llmSegmentationEnabled,
   };
+
+  TranslationPreset copyWith({bool? llmSegmentationEnabled}) =>
+      TranslationPreset(
+        id: id,
+        name: name,
+        prompt: prompt,
+        glossary: glossary,
+        llmSegmentationEnabled:
+            llmSegmentationEnabled ?? this.llmSegmentationEnabled,
+      );
 
   factory TranslationPreset.fromJson(Map<String, dynamic> json) =>
       TranslationPreset(
@@ -63,6 +76,8 @@ class TranslationPreset {
                   PresetGlossaryEntry.fromJson(entry as Map<String, dynamic>),
             )
             .toList(),
+        llmSegmentationEnabled:
+            json['llmSegmentationEnabled'] as bool? ?? false,
       );
 
   static const defaults = [
@@ -107,7 +122,9 @@ class PresetLibrarySnapshot {
     if (fallbackIndex == -1) {
       presets.insert(0, TranslationPreset.fallback);
     } else {
-      presets[fallbackIndex] = TranslationPreset.fallback;
+      presets[fallbackIndex] = TranslationPreset.fallback.copyWith(
+        llmSegmentationEnabled: presets[fallbackIndex].llmSegmentationEnabled,
+      );
     }
     if (presets.isEmpty) {
       throw const FormatException('Preset library cannot be empty.');

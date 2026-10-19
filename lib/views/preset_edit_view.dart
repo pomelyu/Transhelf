@@ -1,9 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import '../l10n/generated/app_localizations.dart';
 import '../models/translation_preset.dart';
-import '../services/gemini_translation_service.dart';
+import '../services/llm_prompt_builder.dart';
 import '../ui/app_palette.dart';
 
 class PresetEditView extends StatefulWidget {
@@ -39,6 +41,8 @@ class _PresetEditViewState extends State<PresetEditView> {
   final Set<String> _selectedTermIds = {};
   final Map<String, FocusNode> _termFocusNodes = {};
   late bool _isDefault = widget.isDefault;
+  late bool _llmSegmentationEnabled =
+      widget.preset?.llmSegmentationEnabled ?? false;
   bool _isCopyDraft = false;
   bool get _isFallback => _presetId == TranslationPreset.fallbackId;
 
@@ -117,6 +121,7 @@ class _PresetEditViewState extends State<PresetEditView> {
               ? TranslationPreset.fallbackPrompt
               : _prompt.text.trim(),
           glossary: _isFallback ? const [] : List.of(_glossary),
+          llmSegmentationEnabled: _llmSegmentationEnabled,
         ),
       );
       if (mounted) Navigator.of(context).pop();
@@ -185,12 +190,13 @@ class _PresetEditViewState extends State<PresetEditView> {
   String _buildPromptPreview(
     String customPrompt,
     List<PresetGlossaryEntry> glossary,
-  ) => GeminiPromptBuilder.build(
+  ) => LlmPromptBuilder.build(
     customPrompt: customPrompt,
     glossary: glossary,
     sourceLanguage: r'${source}',
     targetLanguage: r'${target}',
-    article: '<待翻譯的文章>',
+    article: _llmSegmentationEnabled ? jsonEncode(['...']) : '<待翻譯的文章>',
+    includeLlmSegmentation: _llmSegmentationEnabled,
   );
 
   @override
@@ -280,6 +286,22 @@ class _PresetEditViewState extends State<PresetEditView> {
                             ),
                           ),
                         ),
+                        Text(
+                          l10n.presetLlmSegmentation,
+                          key: const ValueKey('preset_llm_segmentation_label'),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppPalette.muted,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        FSwitch(
+                          key: const ValueKey('preset_llm_segmentation_toggle'),
+                          value: _llmSegmentationEnabled,
+                          onChange: (value) =>
+                              setState(() => _llmSegmentationEnabled = value),
+                        ),
+                        const SizedBox(width: 4),
                         IconButton(
                           key: const ValueKey('preset_prompt_preview'),
                           tooltip: l10n.presetPromptPreview,

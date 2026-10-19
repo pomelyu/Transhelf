@@ -104,6 +104,7 @@
   "presetName": "名稱",
   "presetNameHint": "例如：學術論文",
   "presetPrompt": "自訂提示詞",
+  "presetLlmSegmentation": "LLM 分段",
   "presetPromptPreview": "提示詞預覽",
   "presetPromptHint": "參考詞彙表翻譯文章，並保留專有名詞和人名。",
   "presetGlossary": "自訂詞彙",
@@ -147,5 +148,13 @@
   "chatGPTConfigureFirst": "請先設定 OpenAI API key。",
   "chatGPTApiKeyInvalid": "OpenAI API key 無效或未獲授權。",
   "chatGPTTranslationFailed": "ChatGPT 翻譯失敗",
+  "translateLlmSegmentationInvalid": "LLM 分段回應格式無效，請重試或關閉「LLM 分段」後再翻譯。",
+  "translateLlmSegmentationFailed": "LLM 分段翻譯失敗：{error}",
+  "@translateLlmSegmentationFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "translateLlmSegmentationRequestFailed": "LLM 分段翻譯請求失敗，請稍後再試或關閉「LLM 分段」後重試。",
   "googleOpenSettings": "前往設定"
 }

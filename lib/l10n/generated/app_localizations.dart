@@ -674,6 +674,12 @@ abstract class AppLocalizations {
   /// **'自訂提示詞'**
   String get presetPrompt;
 
+  /// No description provided for @presetLlmSegmentation.
+  ///
+  /// In zh, this message translates to:
+  /// **'LLM 分段'**
+  String get presetLlmSegmentation;
+
   /// No description provided for @presetPromptPreview.
   ///
   /// In zh, this message translates to:
@@ -931,6 +937,24 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'ChatGPT 翻譯失敗'**
   String get chatGPTTranslationFailed;
+
+  /// No description provided for @translateLlmSegmentationInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'LLM 分段回應格式無效，請重試或關閉「LLM 分段」後再翻譯。'**
+  String get translateLlmSegmentationInvalid;
+
+  /// No description provided for @translateLlmSegmentationFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'LLM 分段翻譯失敗：{error}'**
+  String translateLlmSegmentationFailed(Object error);
+
+  /// No description provided for @translateLlmSegmentationRequestFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'LLM 分段翻譯請求失敗，請稍後再試或關閉「LLM 分段」後重試。'**
+  String get translateLlmSegmentationRequestFailed;
 
   /// No description provided for @googleOpenSettings.
   ///

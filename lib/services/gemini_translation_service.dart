@@ -2,8 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import '../models/translation_preset.dart';
-
 typedef GeminiPost = Future<(int, String)> Function(
   Uri uri,
   String apiKey,
@@ -18,28 +16,6 @@ class GeminiTranslationException implements Exception {
 
   @override
   String toString() => message;
-}
-
-abstract final class GeminiPromptBuilder {
-  static String build({
-    required String customPrompt,
-    required List<PresetGlossaryEntry> glossary,
-    required String sourceLanguage,
-    required String targetLanguage,
-    required String article,
-  }) {
-    final glossaryText = glossary
-        .map((entry) => '${entry.source} → ${entry.target}')
-        .join('\n');
-    return '$customPrompt\n\n'
-            '字彙表：\n'
-            '$glossaryText\n\n'
-            '文章：\n'
-            '<待翻譯的文章>'
-        .replaceAll(r'${source}', sourceLanguage)
-        .replaceAll(r'${target}', targetLanguage)
-        .replaceAll('<待翻譯的文章>', article);
-  }
 }
 
 class GeminiTranslationService {

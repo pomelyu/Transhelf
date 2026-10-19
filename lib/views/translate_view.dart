@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
@@ -10,6 +12,8 @@ import '../services/article_segmenter.dart';
 import '../services/chatgpt_translation_service.dart';
 import '../services/gemini_translation_service.dart';
 import '../services/google_translation_service.dart';
+import '../services/llm_segmentation_parser.dart';
+import '../services/llm_prompt_builder.dart';
 import '../services/preset_store.dart';
 import '../ui/app_palette.dart';
 
@@ -160,14 +164,17 @@ class _TranslateViewState extends State<TranslateView> {
 
   Future<void> _showPromptPreview() async {
     final l10n = AppLocalizations.of(context)!;
-    final prompt = GeminiPromptBuilder.build(
-      customPrompt: _selectedPreset.prompt,
-      glossary: _selectedPreset.glossary,
+    final preset = _selectedPreset;
+    final includeLlmSegmentation = preset.llmSegmentationEnabled;
+    final prompt = LlmPromptBuilder.build(
+      customPrompt: preset.prompt,
+      glossary: preset.glossary,
       sourceLanguage: _sourceLanguage == null
           ? '任意的語言'
           : _languageName(l10n, _sourceLanguage),
       targetLanguage: _languageName(l10n, _targetLanguage),
-      article: '...',
+      article: includeLlmSegmentation ? jsonEncode(['...']) : '...',
+      includeLlmSegmentation: includeLlmSegmentation,
     );
     await showDialog<void>(
       context: context,
@@ -231,16 +238,20 @@ class _TranslateViewState extends State<TranslateView> {
       setState(() => _error = l10n.googleEnterText);
       return;
     }
-    final apiKey = switch (_selectedEngine) {
+    final selectedEngine = _selectedEngine;
+    final selectedPreset = _selectedPreset;
+    final useLlmSegmentation =
+        selectedEngine != 0 && selectedPreset.llmSegmentationEnabled;
+    final apiKey = switch (selectedEngine) {
       0 => widget.apiKey,
       1 => widget.geminiApiKey,
       _ => widget.chatGPTApiKey,
     };
     if (apiKey.isEmpty) {
       setState(
-        () => _error = _selectedEngine == 0
+        () => _error = selectedEngine == 0
             ? l10n.googleConfigureFirst
-            : _selectedEngine == 1
+            : selectedEngine == 1
             ? l10n.geminiConfigureFirst
             : l10n.chatGPTConfigureFirst,
       );
@@ -254,48 +265,51 @@ class _TranslateViewState extends State<TranslateView> {
     try {
       final source = _source.text;
       final segments = <ArticleSegment>[];
-      for (final part in ArticleSegmenter.split(source)) {
-        final String translated;
-        if (_selectedEngine == 0) {
-          translated = await _service.translate(
-            text: part,
-            apiKey: apiKey,
-            sourceLanguage: _sourceLanguage,
-            targetLanguage: _targetLanguage,
-          );
-        } else if (_selectedEngine == 1) {
-          final prompt = GeminiPromptBuilder.build(
-            customPrompt: _selectedPreset.prompt,
-            glossary: _selectedPreset.glossary,
-            sourceLanguage: _sourceLanguage == null
-                ? '任意的語言'
-                : _languageName(l10n, _sourceLanguage),
-            targetLanguage: _languageName(l10n, _targetLanguage),
-            article: part,
-          );
-          translated = await _geminiService.translate(
-            prompt: prompt,
-            apiKey: apiKey,
-            model: widget.geminiModel,
-          );
-        } else {
-          final prompt = GeminiPromptBuilder.build(
-            customPrompt: _selectedPreset.prompt,
-            glossary: _selectedPreset.glossary,
-            sourceLanguage: _sourceLanguage == null
-                ? '任意的語言'
-                : _languageName(l10n, _sourceLanguage),
-            targetLanguage: _languageName(l10n, _targetLanguage),
-            article: part,
-          );
-          translated = await _chatGPTService.translate(
-            prompt: prompt,
-            apiKey: apiKey,
-            model: widget.chatGPTModel,
-          );
+      if (useLlmSegmentation) {
+        final sentences = ArticleSegmenter.sentences(source);
+        final prompt = _buildLlmPrompt(
+          l10n: l10n,
+          preset: selectedPreset,
+          article: jsonEncode(sentences),
+          includeLlmSegmentation: true,
+        );
+        final response = await _requestLlmTranslation(
+          engine: selectedEngine,
+          prompt: prompt,
+          apiKey: apiKey,
+        );
+        segments.addAll(
+          LlmSegmentationParser.parse(
+            response: response,
+            sourceSentences: sentences,
+          ),
+        );
+      } else {
+        for (final part in ArticleSegmenter.split(source)) {
+          final String translated;
+          if (selectedEngine == 0) {
+            translated = await _service.translate(
+              text: part,
+              apiKey: apiKey,
+              sourceLanguage: _sourceLanguage,
+              targetLanguage: _targetLanguage,
+            );
+          } else {
+            final prompt = _buildLlmPrompt(
+              l10n: l10n,
+              preset: selectedPreset,
+              article: part,
+              includeLlmSegmentation: false,
+            );
+            translated = await _requestLlmTranslation(
+              engine: selectedEngine,
+              prompt: prompt,
+              apiKey: apiKey,
+            );
+          }
+          if (!mounted || requestEpoch != _translationEpoch) return;
+          segments.add(ArticleSegment(source: part, translation: translated));
         }
-        if (!mounted || requestEpoch != _translationEpoch) return;
-        segments.add(ArticleSegment(source: part, translation: translated));
       }
       if (!mounted || requestEpoch != _translationEpoch) return;
       setState(() {
@@ -307,6 +321,9 @@ class _TranslateViewState extends State<TranslateView> {
         _hasTranslated = true;
         _editingResult = false;
       });
+    } on LlmSegmentationFormatException {
+      if (!mounted || requestEpoch != _translationEpoch) return;
+      setState(() => _error = l10n.translateLlmSegmentationInvalid);
     } on GoogleTranslationException catch (error) {
       if (!mounted || requestEpoch != _translationEpoch) return;
       setState(
@@ -317,23 +334,29 @@ class _TranslateViewState extends State<TranslateView> {
     } on GeminiTranslationException catch (error) {
       if (!mounted || requestEpoch != _translationEpoch) return;
       setState(
-        () => _error = error.statusCode == 400 || error.statusCode == 403
+        () => _error = useLlmSegmentation
+            ? l10n.translateLlmSegmentationFailed(error.message)
+            : error.statusCode == 400 || error.statusCode == 403
             ? l10n.googleApiKeyInvalid
             : '${l10n.geminiTranslationFailed}: ${error.message}',
       );
     } on ChatGPTTranslationException catch (error) {
       if (!mounted || requestEpoch != _translationEpoch) return;
       setState(
-        () => _error = error.statusCode == 400 || error.statusCode == 401
+        () => _error = useLlmSegmentation
+            ? l10n.translateLlmSegmentationFailed(error.message)
+            : error.statusCode == 400 || error.statusCode == 401
             ? l10n.chatGPTApiKeyInvalid
             : '${l10n.chatGPTTranslationFailed}: ${error.message}',
       );
     } catch (_) {
       if (!mounted || requestEpoch != _translationEpoch) return;
       setState(
-        () => _error = _selectedEngine == 0
+        () => _error = useLlmSegmentation
+            ? l10n.translateLlmSegmentationRequestFailed
+            : selectedEngine == 0
             ? l10n.googleTranslationFailed
-            : _selectedEngine == 1
+            : selectedEngine == 1
             ? l10n.geminiTranslationFailed
             : l10n.chatGPTTranslationFailed,
       );
@@ -343,6 +366,38 @@ class _TranslateViewState extends State<TranslateView> {
       }
     }
   }
+
+  String _buildLlmPrompt({
+    required AppLocalizations l10n,
+    required TranslationPreset preset,
+    required String article,
+    required bool includeLlmSegmentation,
+  }) => LlmPromptBuilder.build(
+    customPrompt: preset.prompt,
+    glossary: preset.glossary,
+    sourceLanguage: _sourceLanguage == null
+        ? '任意的語言'
+        : _languageName(l10n, _sourceLanguage),
+    targetLanguage: _languageName(l10n, _targetLanguage),
+    article: article,
+    includeLlmSegmentation: includeLlmSegmentation,
+  );
+
+  Future<String> _requestLlmTranslation({
+    required int engine,
+    required String prompt,
+    required String apiKey,
+  }) => engine == 1
+      ? _geminiService.translate(
+          prompt: prompt,
+          apiKey: apiKey,
+          model: widget.geminiModel,
+        )
+      : _chatGPTService.translate(
+          prompt: prompt,
+          apiKey: apiKey,
+          model: widget.chatGPTModel,
+        );
 
   void _clearSource() {
     _translationEpoch++;

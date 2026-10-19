@@ -3,10 +3,11 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:transhelf/models/translation_preset.dart';
 import 'package:transhelf/services/gemini_translation_service.dart';
+import 'package:transhelf/services/llm_prompt_builder.dart';
 
 void main() {
   test('builds a complete prompt with language and article substitutions', () {
-    final prompt = GeminiPromptBuilder.build(
+    final prompt = LlmPromptBuilder.build(
       customPrompt: r'將${source}翻譯成${target}。',
       glossary: const [
         PresetGlossaryEntry(id: '1', source: 'book', target: '書'),
