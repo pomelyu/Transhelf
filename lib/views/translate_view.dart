@@ -27,6 +27,7 @@ class TranslateView extends StatefulWidget {
     this.chatGPTModel = ChatGPTTranslationService.defaultModel,
     required this.onOpenSettings,
     required this.onSaveArticle,
+    this.isActive = true,
     this.service,
     this.geminiService,
     this.chatGPTService,
@@ -40,6 +41,7 @@ class TranslateView extends StatefulWidget {
   final String chatGPTModel;
   final VoidCallback onOpenSettings;
   final Future<void> Function(Article) onSaveArticle;
+  final bool isActive;
   final GoogleTranslationService? service;
   final GeminiTranslationService? geminiService;
   final ChatGPTTranslationService? chatGPTService;
@@ -200,7 +202,15 @@ class _TranslateViewState extends State<TranslateView> {
     super.initState();
     _sourceFocus.addListener(_handleFocusChange);
     _translationFocus.addListener(_handleFocusChange);
-    _loadPresets();
+    _refreshPresets();
+  }
+
+  @override
+  void didUpdateWidget(covariant TranslateView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.isActive && widget.isActive) {
+      _refreshPresets();
+    }
   }
 
   void _handleFocusChange() {
@@ -208,19 +218,6 @@ class _TranslateViewState extends State<TranslateView> {
     setState(() {
       if (_isEditingText) _error = null;
     });
-  }
-
-  Future<void> _loadPresets() async {
-    try {
-      final library = await _presetStore.load();
-      if (!mounted) return;
-      setState(() {
-        _presetLibrary = library;
-        _selectedPresetId = library.defaultPresetId;
-      });
-    } catch (_) {
-      // Keep built-in presets available if local storage cannot be read.
-    }
   }
 
   @override

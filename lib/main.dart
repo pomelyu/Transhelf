@@ -664,6 +664,7 @@ class _MainShellState extends State<MainShell> {
         children: [
           TranslateView(
             key: const ValueKey('view.translate'),
+            isActive: _index == 0,
             apiKey: widget.googleApiKey,
             geminiApiKey: widget.geminiApiKey,
             geminiModel: widget.geminiModel,
