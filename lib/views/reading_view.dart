@@ -192,7 +192,7 @@ class _ReadingViewState extends State<ReadingView> with WidgetsBindingObserver {
                       child: Text(
                         _title,
                         key: const ValueKey('reader_title'),
-                        maxLines: 2,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 19,
