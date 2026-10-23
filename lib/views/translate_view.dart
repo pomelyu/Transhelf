@@ -157,6 +157,51 @@ class _TranslateViewState extends State<TranslateView> {
     _notifyActionArea();
   }
 
+  Future<void> _openPresetPicker(AppLocalizations l10n) async {
+    await _refreshPresets();
+    if (!mounted) return;
+    final presets = _orderedPresets;
+    final picked = await _showSelectionSheet<String>([
+      for (final preset in presets)
+        ListTile(
+          title: Text(preset.name),
+          subtitle: preset.id == _presetLibrary.defaultPresetId
+              ? Text(l10n.presetDefault)
+              : null,
+          onTap: () => Navigator.pop(context, preset.id),
+        ),
+    ]);
+    if (picked != null && mounted) _pickPreset(picked);
+  }
+
+  Future<void> _openEnginePicker(AppLocalizations l10n) async {
+    final options = <(int, String)>[
+      (0, l10n.googleTranslateName),
+      (1, 'Gemini'),
+      (2, 'ChatGPT'),
+    ];
+    final picked = await _showSelectionSheet<int>([
+      for (final option in options)
+        ListTile(
+          title: Text(option.$2),
+          onTap: () => Navigator.pop(context, option.$1),
+        ),
+    ]);
+    if (picked == null || !mounted) return;
+    _clearTextFocus();
+    _selectedEngine = picked;
+    _translation.clear();
+    _translatedSegments = [];
+    _hasTranslated = false;
+    _showResult = false;
+    _editingResult = false;
+    _error = null;
+    _notifySettingsArea();
+    _notifyContentArea();
+    _notifyEditingText();
+    _notifyActionArea();
+  }
+
   List<TranslationPreset> get _orderedPresets => [
     ..._presetLibrary.presets.where(
       (preset) => preset.id == _presetLibrary.defaultPresetId,
@@ -167,43 +212,15 @@ class _TranslateViewState extends State<TranslateView> {
   ];
 
   Widget _presetDropdown(AppLocalizations l10n) => Expanded(
-    child: PopupMenuButton<String>(
+    child: _choiceContent(
+      l10n.translatePreset,
+      _selectedEngine == 0
+          ? l10n.googlePresetUnavailable
+          : _selectedPreset.name,
       key: const ValueKey('preset_dropdown'),
-      tooltip: l10n.translatePreset,
-      color: AppPalette.surfaceRaised,
-      position: PopupMenuPosition.under,
-      onOpened: _refreshPresets,
-      onSelected: _pickPreset,
-      itemBuilder: (_) => [
-        for (final preset in _orderedPresets)
-          PopupMenuItem(
-            value: preset.id,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(preset.name),
-                if (preset.id == _presetLibrary.defaultPresetId)
-                  Text(
-                    l10n.presetDefault,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: AppPalette.muted,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-      ],
-      child: _choiceContent(
-        l10n.translatePreset,
-        _selectedEngine == 0
-            ? l10n.googlePresetUnavailable
-            : _selectedPreset.name,
-        disabled: _selectedEngine == 0,
-        showChevron: true,
-        useInkWell: false,
-      ),
+      onTap: _selectedEngine == 0 ? null : () => _openPresetPicker(l10n),
+      disabled: _selectedEngine == 0,
+      showChevron: true,
     ),
   );
 
@@ -596,26 +613,30 @@ class _TranslateViewState extends State<TranslateView> {
     _ => code,
   };
 
+  Future<T?> _showSelectionSheet<T>(List<Widget> options) =>
+      showModalBottomSheet<T>(
+        context: context,
+        backgroundColor: AppPalette.surface,
+        builder: (sheetContext) => SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.7,
+            ),
+            child: ListView(shrinkWrap: true, children: options),
+          ),
+        ),
+      );
+
   Future<void> _pickLanguage(bool source) async {
     final l10n = AppLocalizations.of(context)!;
     final options = <String?>[if (source) null, 'en', 'zh-TW', 'ja', 'ko'];
-    final picked = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: AppPalette.surface,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: options
-              .map(
-                (code) => ListTile(
-                  title: Text(_languageName(l10n, code)),
-                  onTap: () => Navigator.pop(context, code ?? 'auto'),
-                ),
-              )
-              .toList(),
+    final picked = await _showSelectionSheet<String>([
+      for (final code in options)
+        ListTile(
+          title: Text(_languageName(l10n, code)),
+          onTap: () => Navigator.pop(context, code ?? 'auto'),
         ),
-      ),
-    );
+    ]);
     if (picked == null) return;
     _clearTextFocus();
     _translatedSegments = [];
@@ -1004,74 +1025,16 @@ class _TranslateViewState extends State<TranslateView> {
       );
 
   Widget _engineDropdown(AppLocalizations l10n) => Expanded(
-    child: PopupMenuButton<int>(
-      key: const ValueKey('engine_dropdown'),
-      tooltip: l10n.translateEngine,
-      color: AppPalette.surfaceRaised,
-      onSelected: (engine) {
-        _clearTextFocus();
-        _selectedEngine = engine;
-        _translation.clear();
-        _translatedSegments = [];
-        _hasTranslated = false;
-        _showResult = false;
-        _editingResult = false;
-        _error = null;
-        _notifySettingsArea();
-        _notifyContentArea();
-        _notifyEditingText();
-        _notifyActionArea();
+    child: _choiceContent(
+      l10n.translateEngine,
+      switch (_selectedEngine) {
+        0 => l10n.googleTranslateName,
+        1 => 'Gemini',
+        _ => 'ChatGPT',
       },
-      itemBuilder: (_) => [
-        PopupMenuItem(value: 0, child: Text(l10n.googleTranslateName)),
-        const PopupMenuItem(value: 1, child: Text('Gemini')),
-        const PopupMenuItem(value: 2, child: Text('ChatGPT')),
-      ],
-      child: Container(
-        height: 49,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: BoxDecoration(
-          color: AppPalette.surfaceRaised,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.translateEngine,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: AppPalette.muted,
-                    ),
-                  ),
-                  Text(
-                    switch (_selectedEngine) {
-                      0 => l10n.googleTranslateName,
-                      1 => 'Gemini',
-                      _ => 'ChatGPT',
-                    },
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              FLucideIcons.chevronDown,
-              size: 14,
-              color: AppPalette.muted,
-            ),
-          ],
-        ),
-      ),
+      key: const ValueKey('engine_dropdown'),
+      onTap: () => _openEnginePicker(l10n),
+      showChevron: true,
     ),
   );
 
@@ -1087,12 +1050,14 @@ class _TranslateViewState extends State<TranslateView> {
   Widget _choiceContent(
     String label,
     String value, {
+    Key? key,
     VoidCallback? onTap,
     bool disabled = false,
     bool showChevron = false,
     bool useInkWell = true,
   }) {
     final field = Container(
+      key: key,
       height: 49,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
