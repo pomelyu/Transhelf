@@ -37,6 +37,7 @@ class _ReadingViewState extends State<ReadingView> with WidgetsBindingObserver {
   bool _allowPop = false;
   bool _closing = false;
   late double _progress = widget.article.progress;
+  late final ValueNotifier<double> _progressNotifier = ValueNotifier(_progress);
   late bool _isPrivate = widget.article.isPrivate;
   bool _savingPrivacy = false;
 
@@ -90,7 +91,12 @@ class _ReadingViewState extends State<ReadingView> with WidgetsBindingObserver {
     if (!_scroll.hasClients) return;
     final extent = _scroll.position.maxScrollExtent;
     final value = extent <= 0 ? 1.0 : (_scroll.offset / extent).clamp(0.0, 1.0);
-    if ((value - _progress).abs() >= 0.001) setState(() => _progress = value);
+    final displayedPercent = (_progressNotifier.value * 100).round();
+    _progress = value;
+    if ((_progressNotifier.value - value).abs() >= 0.001 &&
+        (value * 100).round() != displayedPercent) {
+      _progressNotifier.value = value;
+    }
   }
 
   Future<void> _close() async {
@@ -112,6 +118,7 @@ class _ReadingViewState extends State<ReadingView> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _scroll.dispose();
+    _progressNotifier.dispose();
     super.dispose();
   }
 
@@ -167,7 +174,10 @@ class _ReadingViewState extends State<ReadingView> with WidgetsBindingObserver {
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                child: _progressBar(),
+                child: ValueListenableBuilder<double>(
+                  valueListenable: _progressNotifier,
+                  builder: (_, progress, _) => _progressBar(progress),
+                ),
               ),
               if (_showSettings)
                 Padding(
@@ -205,7 +215,7 @@ class _ReadingViewState extends State<ReadingView> with WidgetsBindingObserver {
     );
   }
 
-  Widget _progressBar() => Container(
+  Widget _progressBar(double progress) => Container(
     key: const ValueKey('reader_progress'),
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
@@ -217,7 +227,7 @@ class _ReadingViewState extends State<ReadingView> with WidgetsBindingObserver {
       children: [
         Expanded(
           child: LinearProgressIndicator(
-            value: _progress,
+            value: progress,
             minHeight: 4,
             backgroundColor: AppPalette.border,
             color: AppPalette.purple,
@@ -225,7 +235,7 @@ class _ReadingViewState extends State<ReadingView> with WidgetsBindingObserver {
         ),
         const SizedBox(width: 12),
         Text(
-          '${(_progress * 100).round()}%',
+          '${(progress * 100).round()}%',
           style: const TextStyle(
             color: AppPalette.blue,
             fontSize: 12,
