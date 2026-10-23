@@ -24,3 +24,7 @@ Transhelf 是以 Flutter 和 Forui 打造的手機翻譯與閱讀應用程式。
 flutter pub get
 flutter run
 ```
+
+## 已知問題
+- 文章的自動切段功能不如預期，完全沒有切段
+- LLM 分段沒有成功，似乎在回傳格式上有問題
