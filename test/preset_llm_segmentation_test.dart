@@ -41,6 +41,8 @@ void main() {
     expect(tester.widget<FSwitch>(toggle).value, isTrue);
     await tester.tap(find.byKey(const ValueKey('preset_save')));
     await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('preset_save')), findsNothing);
+    expect(find.byKey(const ValueKey('status_notice_success')), findsOneWidget);
 
     final saved = PresetLibrarySnapshot.fromJson(
       jsonDecode(preferences.getString(PresetStore.storageKey)!)

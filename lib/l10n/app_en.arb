@@ -26,6 +26,7 @@
   "articleSaveFailed": "Could not save article",
   "articleDelete": "Delete",
   "articleDeleteConfirm": "Delete this article?",
+  "articleDeleted": "Article deleted",
   "articleDeleteFailed": "Could not delete article",
   "articleCancel": "Cancel",
   "articleNoResults": "No matching articles",

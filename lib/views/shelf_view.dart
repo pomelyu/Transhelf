@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../models/article.dart';
 import '../ui/app_palette.dart';
+import '../ui/status_notice.dart';
 
 enum _ShelfSort { recent, oldest, progress, title }
 
@@ -83,10 +84,16 @@ class _ShelfViewState extends State<ShelfView> {
     if (approved != true || !mounted) return;
     try {
       await widget.onDelete(article);
+      if (mounted) {
+        StatusNotice.show(context, success: true, message: l10n.articleDeleted);
+      }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(l10n.articleDeleteFailed)));
+        StatusNotice.show(
+          context,
+          success: false,
+          message: l10n.articleDeleteFailed,
+        );
       }
     }
   }

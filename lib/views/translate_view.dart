@@ -16,6 +16,7 @@ import '../services/llm_segmentation_parser.dart';
 import '../services/llm_prompt_builder.dart';
 import '../services/preset_store.dart';
 import '../ui/app_palette.dart';
+import '../ui/status_notice.dart';
 
 class TranslateView extends StatefulWidget {
   const TranslateView({
@@ -414,8 +415,10 @@ class _TranslateViewState extends State<TranslateView> {
     if (_translation.text.isEmpty) return;
     await Clipboard.setData(ClipboardData(text: _translation.text));
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppLocalizations.of(context)!.translateCopied)),
+    StatusNotice.show(
+      context,
+      success: true,
+      message: AppLocalizations.of(context)!.translateCopied,
     );
   }
 
@@ -514,13 +517,15 @@ class _TranslateViewState extends State<TranslateView> {
           _showResult = false;
           _error = null;
         });
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(l10n.articleSaved)));
+        StatusNotice.show(context, success: true, message: l10n.articleSaved);
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(l10n.articleSaveFailed)));
+        StatusNotice.show(
+          context,
+          success: false,
+          message: l10n.articleSaveFailed,
+        );
       }
     }
   }

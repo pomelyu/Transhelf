@@ -26,6 +26,7 @@
   "articleSaveFailed": "無法儲存文章",
   "articleDelete": "刪除",
   "articleDeleteConfirm": "確定刪除這篇文章？",
+  "articleDeleted": "文章已刪除",
   "articleDeleteFailed": "無法刪除文章",
   "articleCancel": "取消",
   "articleNoResults": "沒有符合的文章",

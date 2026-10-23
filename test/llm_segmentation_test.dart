@@ -79,13 +79,15 @@ void main() {
         ],
         'defaultPresetId': TranslationPreset.fallbackId,
       });
-      expect(library.presets.single.name, TranslationPreset.fallback.name);
-      expect(library.presets.single.prompt, TranslationPreset.fallbackPrompt);
-      expect(library.presets.single.llmSegmentationEnabled, isTrue);
+      final fallbackPreset = library.presets.singleWhere(
+        (preset) => preset.id == TranslationPreset.fallbackId,
+      );
+      expect(fallbackPreset.name, TranslationPreset.fallback.name);
+      expect(fallbackPreset.prompt, TranslationPreset.fallbackPrompt);
+      expect(fallbackPreset.llmSegmentationEnabled, isTrue);
       expect(
-        PresetLibrarySnapshot.fromJson(library.toJson())
-            .presets
-            .single
+        PresetLibrarySnapshot.fromJson(library.toJson()).presets
+            .singleWhere((preset) => preset.id == TranslationPreset.fallbackId)
             .llmSegmentationEnabled,
         isTrue,
       );

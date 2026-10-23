@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../models/translation_preset.dart';
 import '../ui/app_palette.dart';
+import '../ui/status_notice.dart';
 import 'preset_edit_view.dart';
 
 class PresetListView extends StatefulWidget {
@@ -33,6 +34,7 @@ class _PresetListViewState extends State<PresetListView> {
   Future<void> _openEditor(TranslationPreset? preset) async {
     final l10n = AppLocalizations.of(context)!;
     if (_deleteMode) return;
+    var saved = false;
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
         builder: (_) => PresetEditView(
@@ -64,14 +66,14 @@ class _PresetListViewState extends State<PresetListView> {
                 defaultPresetId: _library.defaultPresetId,
               ),
             );
-            if (mounted) {
-              ScaffoldMessenger.of(context)
-                  .showSnackBar(SnackBar(content: Text(l10n.presetSaved)));
-            }
+            saved = true;
           },
         ),
       ),
     );
+    if (saved && mounted) {
+      StatusNotice.show(context, success: true, message: l10n.presetSaved);
+    }
   }
 
   Future<void> _deleteSelected() async {
@@ -116,12 +118,14 @@ class _PresetListViewState extends State<PresetListView> {
         _selectedPresetIds.clear();
         _deleteMode = false;
       });
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l10n.presetDeleted)));
+      StatusNotice.show(context, success: true, message: l10n.presetDeleted);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l10n.presetDeleteFailed)));
+      StatusNotice.show(
+        context,
+        success: false,
+        message: l10n.presetDeleteFailed,
+      );
     }
   }
 

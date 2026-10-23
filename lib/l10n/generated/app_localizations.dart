@@ -254,6 +254,12 @@ abstract class AppLocalizations {
   /// **'確定刪除這篇文章？'**
   String get articleDeleteConfirm;
 
+  /// No description provided for @articleDeleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'文章已刪除'**
+  String get articleDeleted;
+
   /// No description provided for @articleDeleteFailed.
   ///
   /// In zh, this message translates to:

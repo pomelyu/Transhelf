@@ -6,6 +6,7 @@ import 'package:forui/forui.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../models/article.dart';
 import '../ui/app_palette.dart';
+import '../ui/status_notice.dart';
 
 enum _ReadingMode { translation, source, both }
 
@@ -46,10 +47,10 @@ class _ReadingViewState extends State<ReadingView> with WidgetsBindingObserver {
       if (mounted) setState(() => _isPrivate = value);
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context)!.articleSaveFailed),
-          ),
+        StatusNotice.show(
+          context,
+          success: false,
+          message: AppLocalizations.of(context)!.articleSaveFailed,
         );
       }
     } finally {

@@ -88,6 +88,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get articleDeleteConfirm => '確定刪除這篇文章？';
 
   @override
+  String get articleDeleted => '文章已刪除';
+
+  @override
   String get articleDeleteFailed => '無法刪除文章';
 
   @override

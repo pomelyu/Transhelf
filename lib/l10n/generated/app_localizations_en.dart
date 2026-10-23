@@ -88,6 +88,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get articleDeleteConfirm => 'Delete this article?';
 
   @override
+  String get articleDeleted => 'Article deleted';
+
+  @override
   String get articleDeleteFailed => 'Could not delete article';
 
   @override

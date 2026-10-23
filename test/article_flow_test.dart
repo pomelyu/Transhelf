@@ -105,6 +105,9 @@ void main() {
     await tester.pump();
     await tester.tap(find.byKey(const ValueKey('article_save_confirm')));
     await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('status_notice_success')), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 1800));
+    await tester.pumpAndSettle();
 
     final input = find.byKey(const ValueKey('translate_input'));
     expect(input, findsOneWidget);
@@ -154,6 +157,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('article_delete_confirm')));
     await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('status_notice_success')), findsOneWidget);
     expect(await store.load(), isEmpty);
   });
 
