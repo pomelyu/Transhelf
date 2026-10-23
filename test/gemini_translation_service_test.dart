@@ -17,14 +17,17 @@ void main() {
       article: 'Books are useful.',
     );
 
-    expect(
-      prompt,
-      '將任意的語言翻譯成繁體中文。\n\n'
-      '字彙表：\n'
-      'book → 書\n\n'
-      '文章：\n'
-      'Books are useful.',
+    final sections = prompt.split(
+      RegExp(r'(?=輸出格式：\n|字彙表：\n|文章：\n)'),
     );
+    expect(sections, hasLength(4));
+    expect(sections[0], '將任意的語言翻譯成繁體中文。\n\n');
+    expect(
+      sections[1],
+      '輸出格式：\n${LlmPromptBuilder.normalFormatPrompt}\n\n',
+    );
+    expect(sections[2], '字彙表：\nbook → 書\n\n');
+    expect(sections[3], '文章：\nBooks are useful.');
     expect(prompt, isNot(contains(r'${source}')));
     expect(prompt, isNot(contains(r'${target}')));
     expect(prompt, isNot(contains('<待翻譯的文章>')));

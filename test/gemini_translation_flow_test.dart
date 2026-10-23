@@ -103,13 +103,19 @@ void main() {
 
     expect(receivedApiKey, 'gemini-key');
     expect(receivedUri?.path, contains('gemini-3.6-flash'));
+    final promptSections = receivedPrompt!.split(
+      RegExp(r'(?=輸出格式：\n|字彙表：\n|文章：\n)'),
+    );
+    expect(promptSections, hasLength(4));
+    expect(promptSections[0], 'Translate from 任意的語言 to 繁體中文.\n\n');
     expect(
-      receivedPrompt,
-      'Translate from 任意的語言 to 繁體中文.\n\n'
-      '字彙表：\n'
-      'useful → 有用的\n\n'
-      '文章：\n'
-      'A useful sentence for translation.',
+      promptSections[1],
+      '輸出格式：\n只輸出翻譯結果，不重複原文，不要有任何額外說明\n\n',
+    );
+    expect(promptSections[2], '字彙表：\nuseful → 有用的\n\n');
+    expect(
+      promptSections[3],
+      '文章：\nA useful sentence for translation.',
     );
     expect(receivedPrompt, isNot(contains('<待翻譯的文章>')));
     expect(find.byKey(const ValueKey('save_article_button')), findsOneWidget);
