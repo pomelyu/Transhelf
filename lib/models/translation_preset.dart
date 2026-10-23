@@ -47,6 +47,15 @@ class TranslationPreset {
     prompt: fallbackPrompt,
   );
 
+  static const fallbackSafeId = 'default_safe_translation';
+  static const fallbackSafePrompt =
+      r'參考詞彙表，將以下的文章從${source}翻譯成${target}。保留專有名詞和人名不變。如遇到暴力、露骨等無法翻譯的問題，以符合原意的方式改為含蓄的版本';
+  static const fallbackSafe = TranslationPreset(
+    id: fallbackSafeId,
+    name: '含蓄翻譯',
+    prompt: fallbackSafePrompt,
+  );
+
   Map<String, Object?> toJson() => {
     'id': id,
     'name': name,
@@ -80,20 +89,7 @@ class TranslationPreset {
             json['llmSegmentationEnabled'] as bool? ?? false,
       );
 
-  static const defaults = [
-    fallback,
-    TranslationPreset(
-      id: 'technical',
-      name: '技術文章',
-      prompt: '保留常見英文技術名詞，優先使用台灣常用譯法。',
-    ),
-    TranslationPreset(id: 'natural', name: '自然對話', prompt: '避免逐字翻譯，優先維持對話語氣。'),
-    TranslationPreset(
-      id: 'summary',
-      name: '精簡摘要',
-      prompt: '整理為五點以內的摘要，保留關鍵數字。',
-    ),
-  ];
+  static const defaults = [fallback, fallbackSafe];
 }
 
 class PresetLibrarySnapshot {
@@ -126,6 +122,11 @@ class PresetLibrarySnapshot {
         llmSegmentationEnabled: presets[fallbackIndex].llmSegmentationEnabled,
       );
     }
+    if (!presets.any(
+      (preset) => preset.id == TranslationPreset.fallbackSafeId,
+    )) {
+      presets.add(TranslationPreset.fallbackSafe);
+    }
     if (presets.isEmpty) {
       throw const FormatException('Preset library cannot be empty.');
     }
@@ -134,12 +135,12 @@ class PresetLibrarySnapshot {
       presets: presets,
       defaultPresetId: presets.any((preset) => preset.id == storedDefault)
           ? storedDefault!
-          : TranslationPreset.fallbackId,
+          : TranslationPreset.fallbackSafeId,
     );
   }
 
   static const defaults = PresetLibrarySnapshot(
     presets: TranslationPreset.defaults,
-    defaultPresetId: 'technical',
+    defaultPresetId: TranslationPreset.fallbackSafeId,
   );
 }
