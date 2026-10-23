@@ -57,6 +57,13 @@ class _TranslateViewState extends State<TranslateView> {
   final _translation = TextEditingController();
   final _sourceFocus = FocusNode();
   final _translationFocus = FocusNode();
+  final _settingsRevision = ValueNotifier<int>(0);
+  final _contentRevision = ValueNotifier<int>(0);
+  final _editingText = ValueNotifier<bool>(false);
+  final _sourceCharacterCount = ValueNotifier<int>(0);
+  late final ValueNotifier<_TranslateActionState> _actionState = ValueNotifier(
+    _currentActionState,
+  );
   late final GoogleTranslationService _service =
       widget.service ?? GoogleTranslationService();
   late final GeminiTranslationService _geminiService =
@@ -81,6 +88,40 @@ class _TranslateViewState extends State<TranslateView> {
   bool get _isEditingText =>
       _sourceFocus.hasFocus || (_editingResult && _translationFocus.hasFocus);
 
+  _TranslateActionState get _currentActionState => _TranslateActionState(
+    busy: _busy,
+    error: _error,
+    hasTranslated: _hasTranslated,
+    canSave:
+        _hasTranslated &&
+        !_busy &&
+        _translatedSegments.isNotEmpty &&
+        _translation.text.trim().isNotEmpty,
+  );
+
+  void _notifySettingsArea() => _settingsRevision.value++;
+
+  void _notifyContentArea() => _contentRevision.value++;
+
+  void _notifyEditingText() => _editingText.value = _isEditingText;
+
+  void _notifyCharacterCount() =>
+      _sourceCharacterCount.value = _source.text.length;
+
+  void _notifyActionArea() {
+    final next = _currentActionState;
+    if (next != _actionState.value) _actionState.value = next;
+  }
+
+  void _clearTextFocus() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _sourceFocus.unfocus();
+      _translationFocus.unfocus();
+      _notifyEditingText();
+    });
+  }
+
   TranslationPreset get _selectedPreset => _presetLibrary.presets.firstWhere(
     (preset) => preset.id == _selectedPresetId,
     orElse: () => TranslationPreset.fallback,
@@ -90,29 +131,30 @@ class _TranslateViewState extends State<TranslateView> {
     try {
       final library = await _presetStore.load();
       if (!mounted) return;
-      setState(() {
-        _presetLibrary = library;
-        if (!_hasManuallySelectedPreset ||
-            !library.presets.any((preset) => preset.id == _selectedPresetId)) {
-          _selectedPresetId = library.defaultPresetId;
-          _hasManuallySelectedPreset = false;
-        }
-      });
+      _presetLibrary = library;
+      if (!_hasManuallySelectedPreset ||
+          !library.presets.any((preset) => preset.id == _selectedPresetId)) {
+        _selectedPresetId = library.defaultPresetId;
+        _hasManuallySelectedPreset = false;
+      }
+      _notifySettingsArea();
     } catch (_) {
       // Keep the last loaded preset library available if storage is unavailable.
     }
   }
 
   void _pickPreset(String picked) {
-    setState(() {
-      _selectedPresetId = picked;
-      _hasManuallySelectedPreset = true;
-      _translatedSegments = [];
-      _translation.clear();
-      _hasTranslated = false;
-      _showResult = false;
-      _error = null;
-    });
+    _clearTextFocus();
+    _selectedPresetId = picked;
+    _hasManuallySelectedPreset = true;
+    _translatedSegments = [];
+    _translation.clear();
+    _hasTranslated = false;
+    _showResult = false;
+    _error = null;
+    _notifySettingsArea();
+    _notifyContentArea();
+    _notifyActionArea();
   }
 
   List<TranslationPreset> get _orderedPresets => [
@@ -216,9 +258,11 @@ class _TranslateViewState extends State<TranslateView> {
 
   void _handleFocusChange() {
     if (!mounted) return;
-    setState(() {
-      if (_isEditingText) _error = null;
-    });
+    _notifyEditingText();
+    if (_isEditingText) {
+      _error = null;
+      _notifyActionArea();
+    }
   }
 
   @override
@@ -227,13 +271,19 @@ class _TranslateViewState extends State<TranslateView> {
     _translation.dispose();
     _sourceFocus.dispose();
     _translationFocus.dispose();
+    _settingsRevision.dispose();
+    _contentRevision.dispose();
+    _editingText.dispose();
+    _sourceCharacterCount.dispose();
+    _actionState.dispose();
     super.dispose();
   }
 
   Future<void> _translate() async {
     final l10n = AppLocalizations.of(context)!;
     if (_source.text.trim().isEmpty) {
-      setState(() => _error = l10n.googleEnterText);
+      _error = l10n.googleEnterText;
+      _notifyActionArea();
       return;
     }
     final selectedEngine = _selectedEngine;
@@ -246,20 +296,18 @@ class _TranslateViewState extends State<TranslateView> {
       _ => widget.chatGPTApiKey,
     };
     if (apiKey.isEmpty) {
-      setState(
-        () => _error = selectedEngine == 0
-            ? l10n.googleConfigureFirst
-            : selectedEngine == 1
-            ? l10n.geminiConfigureFirst
-            : l10n.chatGPTConfigureFirst,
-      );
+      _error = selectedEngine == 0
+          ? l10n.googleConfigureFirst
+          : selectedEngine == 1
+          ? l10n.geminiConfigureFirst
+          : l10n.chatGPTConfigureFirst;
+      _notifyActionArea();
       return;
     }
     final requestEpoch = ++_translationEpoch;
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
+    _busy = true;
+    _error = null;
+    _notifyActionArea();
     try {
       final source = _source.text;
       final segments = <ArticleSegment>[];
@@ -310,57 +358,57 @@ class _TranslateViewState extends State<TranslateView> {
         }
       }
       if (!mounted || requestEpoch != _translationEpoch) return;
-      setState(() {
-        _translation.text = segments
-            .map((part) => part.translation)
-            .join('\n\n');
-        _translatedSegments = _source.text == source ? segments : [];
-        _showResult = true;
-        _hasTranslated = true;
-        _editingResult = false;
-      });
+      _sourceFocus.unfocus();
+      _translationFocus.unfocus();
+      _notifyEditingText();
+      _translation.text = segments.map((part) => part.translation).join('\n\n');
+      _translatedSegments = _source.text == source ? segments : [];
+      _showResult = true;
+      _hasTranslated = true;
+      _editingResult = false;
+      _notifyContentArea();
+      _notifySettingsArea();
+      _notifyActionArea();
     } on LlmSegmentationFormatException {
       if (!mounted || requestEpoch != _translationEpoch) return;
-      setState(() => _error = l10n.translateLlmSegmentationInvalid);
+      _error = l10n.translateLlmSegmentationInvalid;
+      _notifyActionArea();
     } on GoogleTranslationException catch (error) {
       if (!mounted || requestEpoch != _translationEpoch) return;
-      setState(
-        () => _error = error.statusCode == 403
-            ? l10n.googleApiKeyInvalid
-            : '${l10n.googleTranslationFailed}: ${error.message}',
-      );
+      _error = error.statusCode == 403
+          ? l10n.googleApiKeyInvalid
+          : '${l10n.googleTranslationFailed}: ${error.message}';
+      _notifyActionArea();
     } on GeminiTranslationException catch (error) {
       if (!mounted || requestEpoch != _translationEpoch) return;
-      setState(
-        () => _error = useLlmSegmentation
-            ? l10n.translateLlmSegmentationFailed(error.message)
-            : error.statusCode == 400 || error.statusCode == 403
-            ? l10n.googleApiKeyInvalid
-            : '${l10n.geminiTranslationFailed}: ${error.message}',
-      );
+      _error = useLlmSegmentation
+          ? l10n.translateLlmSegmentationFailed(error.message)
+          : error.statusCode == 400 || error.statusCode == 403
+          ? l10n.googleApiKeyInvalid
+          : '${l10n.geminiTranslationFailed}: ${error.message}';
+      _notifyActionArea();
     } on ChatGPTTranslationException catch (error) {
       if (!mounted || requestEpoch != _translationEpoch) return;
-      setState(
-        () => _error = useLlmSegmentation
-            ? l10n.translateLlmSegmentationFailed(error.message)
-            : error.statusCode == 400 || error.statusCode == 401
-            ? l10n.chatGPTApiKeyInvalid
-            : '${l10n.chatGPTTranslationFailed}: ${error.message}',
-      );
+      _error = useLlmSegmentation
+          ? l10n.translateLlmSegmentationFailed(error.message)
+          : error.statusCode == 400 || error.statusCode == 401
+          ? l10n.chatGPTApiKeyInvalid
+          : '${l10n.chatGPTTranslationFailed}: ${error.message}';
+      _notifyActionArea();
     } catch (_) {
       if (!mounted || requestEpoch != _translationEpoch) return;
-      setState(
-        () => _error = useLlmSegmentation
-            ? l10n.translateLlmSegmentationRequestFailed
-            : selectedEngine == 0
-            ? l10n.googleTranslationFailed
-            : selectedEngine == 1
-            ? l10n.geminiTranslationFailed
-            : l10n.chatGPTTranslationFailed,
-      );
+      _error = useLlmSegmentation
+          ? l10n.translateLlmSegmentationRequestFailed
+          : selectedEngine == 0
+          ? l10n.googleTranslationFailed
+          : selectedEngine == 1
+          ? l10n.geminiTranslationFailed
+          : l10n.chatGPTTranslationFailed;
+      _notifyActionArea();
     } finally {
       if (mounted && requestEpoch == _translationEpoch) {
-        setState(() => _busy = false);
+        _busy = false;
+        _notifyActionArea();
       }
     }
   }
@@ -402,13 +450,15 @@ class _TranslateViewState extends State<TranslateView> {
     _source.clear();
     _translation.clear();
     FocusScope.of(context).unfocus();
-    setState(() {
-      _translatedSegments = [];
-      _hasTranslated = false;
-      _editingResult = false;
-      _error = null;
-      _busy = false;
-    });
+    _translatedSegments = [];
+    _hasTranslated = false;
+    _editingResult = false;
+    _error = null;
+    _busy = false;
+    _notifyCharacterCount();
+    _notifyContentArea();
+    _notifyEditingText();
+    _notifyActionArea();
   }
 
   Future<void> _copyTranslation() async {
@@ -423,7 +473,11 @@ class _TranslateViewState extends State<TranslateView> {
   }
 
   void _toggleResultEditing() {
-    setState(() => _editingResult = !_editingResult);
+    _editingResult = !_editingResult;
+    _notifyContentArea();
+    _notifySettingsArea();
+    _notifyEditingText();
+    _notifyActionArea();
     if (_editingResult) {
       _translationFocus.requestFocus();
     } else {
@@ -508,15 +562,18 @@ class _TranslateViewState extends State<TranslateView> {
     try {
       await widget.onSaveArticle(article);
       if (mounted) {
-        setState(() {
-          _source.clear();
-          _translation.clear();
-          _translatedSegments = [];
-          _hasTranslated = false;
-          _editingResult = false;
-          _showResult = false;
-          _error = null;
-        });
+        _source.clear();
+        _translation.clear();
+        _translatedSegments = [];
+        _hasTranslated = false;
+        _editingResult = false;
+        _showResult = false;
+        _error = null;
+        _notifyCharacterCount();
+        _notifyContentArea();
+        _notifySettingsArea();
+        _notifyEditingText();
+        _notifyActionArea();
         StatusNotice.show(context, success: true, message: l10n.articleSaved);
       }
     } catch (_) {
@@ -560,24 +617,20 @@ class _TranslateViewState extends State<TranslateView> {
       ),
     );
     if (picked == null) return;
-    setState(() {
-      _translatedSegments = [];
-      if (source) {
-        _sourceLanguage = picked == 'auto' ? null : picked;
-      } else {
-        _targetLanguage = picked;
-      }
-    });
+    _clearTextFocus();
+    _translatedSegments = [];
+    if (source) {
+      _sourceLanguage = picked == 'auto' ? null : picked;
+    } else {
+      _targetLanguage = picked;
+    }
+    _notifySettingsArea();
+    _notifyActionArea();
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final engineName = switch (_selectedEngine) {
-      0 => l10n.googleTranslateName,
-      1 => 'Gemini',
-      _ => 'ChatGPT',
-    };
     return Material(
       color: Colors.transparent,
       child: SafeArea(
@@ -594,278 +647,325 @@ class _TranslateViewState extends State<TranslateView> {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              SizedBox(height: _isEditingText ? 10 : 20),
-              if (!_isEditingText) ...[
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: _panelDecoration,
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          _engineDropdown(l10n),
-                          const SizedBox(width: 8),
-                          _presetDropdown(l10n),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          _choice(
-                            '',
-                            _languageName(l10n, _sourceLanguage),
-                            onTap: () => _pickLanguage(true),
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 8),
-                            child: Icon(
-                              FLucideIcons.arrowLeftRight,
-                              size: 18,
-                              color: AppPalette.muted,
-                            ),
-                          ),
-                          _choice(
-                            '',
-                            _languageName(l10n, _targetLanguage),
-                            onTap: () => _pickLanguage(false),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Container(
-                  height: 42,
-                  decoration: _panelDecoration,
-                  child: Row(
-                    children: [
-                      _tab(
-                        l10n.translateSource,
-                        !_showResult,
-                        () => setState(() => _showResult = false),
-                        key: const ValueKey('translate_source_tab'),
-                      ),
-                      _tab(
-                        l10n.translateResult,
-                        _showResult,
-                        () => setState(() => _showResult = true),
-                        key: const ValueKey('translate_result_tab'),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 10),
-              ],
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final constrainedWhileEditing =
-                        _isEditingText && constraints.maxHeight < 110;
-                    final verticalPadding = _isEditingText
-                        ? (constrainedWhileEditing ? 0.0 : 8.0)
-                        : 16.0;
-                    final toolbarExtent = constrainedWhileEditing ? 24.0 : null;
-                    return Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: verticalPadding,
-                      ),
-                      decoration: _panelDecoration,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  _showResult
-                                      ? '$engineName · ${l10n.translateResult}'
-                                      : '${_source.text.length} ${l10n.translateCharacters}',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: AppPalette.muted,
-                                  ),
-                                ),
-                              ),
-                              if (_showResult) ...[
-                                _toolbarButton(
-                                  key: const ValueKey(
-                                    'copy_translation_button',
-                                  ),
-                                  icon: FLucideIcons.copy,
-                                  tooltip: l10n.translateCopy,
-                                  compact: _isEditingText,
-                                  extent: toolbarExtent,
-                                  onPressed: _translation.text.isEmpty
-                                      ? null
-                                      : _copyTranslation,
-                                ),
-                                _toolbarButton(
-                                  key: const ValueKey('retranslate_button'),
-                                  icon: FLucideIcons.refreshCw,
-                                  tooltip: l10n.translateAgain,
-                                  compact: _isEditingText,
-                                  extent: toolbarExtent,
-                                  onPressed: _busy ? null : _translate,
-                                ),
-                                _toolbarButton(
-                                  key: const ValueKey(
-                                    'edit_translation_button',
-                                  ),
-                                  icon: _editingResult
-                                      ? FLucideIcons.check
-                                      : FLucideIcons.pencil,
-                                  tooltip: _editingResult
-                                      ? l10n.translateFinishEditing
-                                      : l10n.translateEdit,
-                                  compact: _isEditingText,
-                                  extent: toolbarExtent,
-                                  onPressed: _translation.text.isEmpty
-                                      ? null
-                                      : _toggleResultEditing,
-                                ),
-                                if (_isEditingText)
-                                  _dismissKeyboardButton(l10n),
-                              ] else ...[
-                                if (_selectedEngine > 0)
-                                  _toolbarButton(
-                                    key: const ValueKey(
-                                      'gemini_prompt_preview',
-                                    ),
-                                    icon: FLucideIcons.eye,
-                                    tooltip: l10n.presetPromptPreview,
-                                    compact: _isEditingText,
-                                    extent: toolbarExtent,
-                                    onPressed: _showPromptPreview,
-                                  ),
-                                _toolbarButton(
-                                  key: const ValueKey('clear_source_button'),
-                                  icon: FLucideIcons.x,
-                                  tooltip: l10n.translateClearSource,
-                                  compact: _isEditingText,
-                                  extent: toolbarExtent,
-                                  onPressed: _source.text.isEmpty
-                                      ? null
-                                      : _clearSource,
-                                ),
-                                if (_isEditingText)
-                                  _dismissKeyboardButton(
-                                    l10n,
-                                    extent: toolbarExtent,
-                                  ),
-                              ],
-                            ],
-                          ),
-                          Divider(
-                            height: constrainedWhileEditing
-                                ? 0
-                                : _isEditingText
-                                ? 10
-                                : 22,
-                            color: AppPalette.border,
-                          ),
-                          Expanded(
-                            child: _showResult
-                                ? TextField(
-                                    key: const ValueKey('translate_output'),
-                                    controller: _translation,
-                                    focusNode: _translationFocus,
-                                    readOnly: !_editingResult,
-                                    onChanged: (_) => setState(() {}),
-                                    maxLines: null,
-                                    expands: true,
-                                    textAlignVertical: TextAlignVertical.top,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      height: 1.5,
-                                    ),
-                                    decoration: InputDecoration.collapsed(
-                                      hintText: l10n.translateOutputHint,
-                                    ),
-                                  )
-                                : TextField(
-                                    key: const ValueKey('translate_input'),
-                                    controller: _source,
-                                    focusNode: _sourceFocus,
-                                    onChanged: (_) => setState(() {
-                                      _translationEpoch++;
-                                      _translatedSegments = [];
-                                      _error = null;
-                                      _busy = false;
-                                      if (_source.text.trim().isEmpty) {
-                                        _translation.clear();
-                                        _hasTranslated = false;
-                                        _editingResult = false;
-                                      }
-                                    }),
-                                    maxLines: null,
-                                    expands: true,
-                                    textAlignVertical: TextAlignVertical.top,
-                                    decoration: InputDecoration.collapsed(
-                                      hintText: l10n.translateInputHint,
-                                    ),
-                                  ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+              ValueListenableBuilder<bool>(
+                valueListenable: _editingText,
+                builder: (context, editingText, _) => Column(
+                  children: [
+                    SizedBox(height: editingText ? 10 : 20),
+                    if (!editingText) _buildSettingsArea(l10n),
+                  ],
                 ),
               ),
-              if (_error != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  key: const ValueKey('translate_error'),
-                  _error!,
-                  style: const TextStyle(color: Colors.redAccent, fontSize: 12),
-                ),
-                if (switch (_selectedEngine) {
-                  0 => widget.apiKey,
-                  1 => widget.geminiApiKey,
-                  _ => widget.chatGPTApiKey,
-                }.isEmpty)
-                  TextButton(
-                    onPressed: widget.onOpenSettings,
-                    child: Text(l10n.googleOpenSettings),
-                  ),
-              ],
-              const SizedBox(height: 10),
-              if (_hasTranslated)
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    key: const ValueKey('save_article_button'),
-                    onPressed:
-                        _busy ||
-                            _translatedSegments.isEmpty ||
-                            _translation.text.trim().isEmpty
-                        ? null
-                        : _saveArticle,
-                    child: Text(l10n.translateSave),
-                  ),
-                )
-              else
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    key: const ValueKey('translate_button'),
-                    onPressed: _busy ? null : _translate,
-                    child: _busy
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(l10n.translateStart),
-                  ),
-                ),
+              Expanded(child: _buildTranslateArea(l10n)),
+              _buildTranslateActions(l10n),
             ],
           ),
         ),
       ),
     );
   }
+
+  Widget _buildSettingsArea(AppLocalizations l10n) =>
+      ValueListenableBuilder<int>(
+        valueListenable: _settingsRevision,
+        builder: (context, _, _) => Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: _panelDecoration,
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      _engineDropdown(l10n),
+                      const SizedBox(width: 8),
+                      _presetDropdown(l10n),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      _choice(
+                        '',
+                        _languageName(l10n, _sourceLanguage),
+                        onTap: () => _pickLanguage(true),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8),
+                        child: Icon(
+                          FLucideIcons.arrowLeftRight,
+                          size: 18,
+                          color: AppPalette.muted,
+                        ),
+                      ),
+                      _choice(
+                        '',
+                        _languageName(l10n, _targetLanguage),
+                        onTap: () => _pickLanguage(false),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              height: 42,
+              decoration: _panelDecoration,
+              child: Row(
+                children: [
+                  _tab(l10n.translateSource, !_showResult, () {
+                    _showResult = false;
+                    _notifySettingsArea();
+                    _notifyContentArea();
+                  }, key: const ValueKey('translate_source_tab')),
+                  _tab(l10n.translateResult, _showResult, () {
+                    _showResult = true;
+                    _notifySettingsArea();
+                    _notifyContentArea();
+                  }, key: const ValueKey('translate_result_tab')),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+        ),
+      );
+
+  Widget _buildTranslateArea(AppLocalizations l10n) =>
+      ValueListenableBuilder<int>(
+        valueListenable: _contentRevision,
+        builder: (context, _, _) => ValueListenableBuilder<bool>(
+          valueListenable: _editingText,
+          builder: (context, editingText, _) => LayoutBuilder(
+            builder: (context, constraints) {
+              final constrainedWhileEditing =
+                  editingText && constraints.maxHeight < 110;
+              final verticalPadding = editingText
+                  ? (constrainedWhileEditing ? 0.0 : 8.0)
+                  : 16.0;
+              final toolbarExtent = constrainedWhileEditing ? 24.0 : null;
+              final engineName = switch (_selectedEngine) {
+                0 => l10n.googleTranslateName,
+                1 => 'Gemini',
+                _ => 'ChatGPT',
+              };
+              return Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: verticalPadding,
+                ),
+                decoration: _panelDecoration,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _showResult
+                              ? Text(
+                                  '$engineName · ${l10n.translateResult}',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: AppPalette.muted,
+                                  ),
+                                )
+                              : ValueListenableBuilder<int>(
+                                  valueListenable: _sourceCharacterCount,
+                                  builder: (context, count, _) => Text(
+                                    '$count ${l10n.translateCharacters}',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppPalette.muted,
+                                    ),
+                                  ),
+                                ),
+                        ),
+                        if (_showResult) ...[
+                          ValueListenableBuilder<TextEditingValue>(
+                            valueListenable: _translation,
+                            builder: (context, value, _) => _toolbarButton(
+                              key: const ValueKey('copy_translation_button'),
+                              icon: FLucideIcons.copy,
+                              tooltip: l10n.translateCopy,
+                              compact: editingText,
+                              extent: toolbarExtent,
+                              onPressed: value.text.isEmpty
+                                  ? null
+                                  : _copyTranslation,
+                            ),
+                          ),
+                          ValueListenableBuilder<_TranslateActionState>(
+                            valueListenable: _actionState,
+                            builder: (context, action, _) => _toolbarButton(
+                              key: const ValueKey('retranslate_button'),
+                              icon: FLucideIcons.refreshCw,
+                              tooltip: l10n.translateAgain,
+                              compact: editingText,
+                              extent: toolbarExtent,
+                              onPressed: action.busy ? null : _translate,
+                            ),
+                          ),
+                          ValueListenableBuilder<TextEditingValue>(
+                            valueListenable: _translation,
+                            builder: (context, value, _) => _toolbarButton(
+                              key: const ValueKey('edit_translation_button'),
+                              icon: _editingResult
+                                  ? FLucideIcons.check
+                                  : FLucideIcons.pencil,
+                              tooltip: _editingResult
+                                  ? l10n.translateFinishEditing
+                                  : l10n.translateEdit,
+                              compact: editingText,
+                              extent: toolbarExtent,
+                              onPressed: value.text.isEmpty
+                                  ? null
+                                  : _toggleResultEditing,
+                            ),
+                          ),
+                          if (editingText) _dismissKeyboardButton(l10n),
+                        ] else ...[
+                          if (_selectedEngine > 0)
+                            _toolbarButton(
+                              key: const ValueKey('gemini_prompt_preview'),
+                              icon: FLucideIcons.eye,
+                              tooltip: l10n.presetPromptPreview,
+                              compact: editingText,
+                              extent: toolbarExtent,
+                              onPressed: _showPromptPreview,
+                            ),
+                          ValueListenableBuilder<TextEditingValue>(
+                            valueListenable: _source,
+                            builder: (context, value, _) => _toolbarButton(
+                              key: const ValueKey('clear_source_button'),
+                              icon: FLucideIcons.x,
+                              tooltip: l10n.translateClearSource,
+                              compact: editingText,
+                              extent: toolbarExtent,
+                              onPressed: value.text.isEmpty
+                                  ? null
+                                  : _clearSource,
+                            ),
+                          ),
+                          if (editingText)
+                            _dismissKeyboardButton(l10n, extent: toolbarExtent),
+                        ],
+                      ],
+                    ),
+                    Divider(
+                      height: constrainedWhileEditing
+                          ? 0
+                          : editingText
+                          ? 10
+                          : 22,
+                      color: AppPalette.border,
+                    ),
+                    Expanded(
+                      child: _showResult
+                          ? TextField(
+                              key: const ValueKey('translate_output'),
+                              controller: _translation,
+                              focusNode: _translationFocus,
+                              readOnly: !_editingResult,
+                              onChanged: (_) => _notifyActionArea(),
+                              maxLines: null,
+                              expands: true,
+                              textAlignVertical: TextAlignVertical.top,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                height: 1.5,
+                              ),
+                              decoration: InputDecoration.collapsed(
+                                hintText: l10n.translateOutputHint,
+                              ),
+                            )
+                          : TextField(
+                              key: const ValueKey('translate_input'),
+                              controller: _source,
+                              focusNode: _sourceFocus,
+                              onChanged: _handleSourceChanged,
+                              maxLines: null,
+                              expands: true,
+                              textAlignVertical: TextAlignVertical.top,
+                              decoration: InputDecoration.collapsed(
+                                hintText: l10n.translateInputHint,
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      );
+
+  void _handleSourceChanged(String _) {
+    _notifyCharacterCount();
+    _translationEpoch++;
+    _translatedSegments = [];
+    _error = null;
+    _busy = false;
+    if (_source.text.trim().isEmpty) {
+      _translation.clear();
+      _hasTranslated = false;
+      _editingResult = false;
+      _notifyContentArea();
+      _notifyEditingText();
+    }
+    _notifyActionArea();
+  }
+
+  Widget _buildTranslateActions(AppLocalizations l10n) =>
+      ValueListenableBuilder<_TranslateActionState>(
+        valueListenable: _actionState,
+        builder: (context, action, _) => Column(
+          children: [
+            if (action.error != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                key: const ValueKey('translate_error'),
+                action.error!,
+                style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+              ),
+              if (switch (_selectedEngine) {
+                0 => widget.apiKey,
+                1 => widget.geminiApiKey,
+                _ => widget.chatGPTApiKey,
+              }.isEmpty)
+                TextButton(
+                  onPressed: widget.onOpenSettings,
+                  child: Text(l10n.googleOpenSettings),
+                ),
+            ],
+            const SizedBox(height: 10),
+            if (action.hasTranslated)
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  key: const ValueKey('save_article_button'),
+                  onPressed: action.canSave ? _saveArticle : null,
+                  child: Text(l10n.translateSave),
+                ),
+              )
+            else
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  key: const ValueKey('translate_button'),
+                  onPressed: action.busy ? null : _translate,
+                  child: action.busy
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(l10n.translateStart),
+                ),
+              ),
+          ],
+        ),
+      );
 
   static final _panelDecoration = BoxDecoration(
     color: AppPalette.surface,
@@ -908,7 +1008,8 @@ class _TranslateViewState extends State<TranslateView> {
       key: const ValueKey('engine_dropdown'),
       tooltip: l10n.translateEngine,
       color: AppPalette.surfaceRaised,
-      onSelected: (engine) => setState(() {
+      onSelected: (engine) {
+        _clearTextFocus();
         _selectedEngine = engine;
         _translation.clear();
         _translatedSegments = [];
@@ -916,7 +1017,11 @@ class _TranslateViewState extends State<TranslateView> {
         _showResult = false;
         _editingResult = false;
         _error = null;
-      }),
+        _notifySettingsArea();
+        _notifyContentArea();
+        _notifyEditingText();
+        _notifyActionArea();
+      },
       itemBuilder: (_) => [
         PopupMenuItem(value: 0, child: Text(l10n.googleTranslateName)),
         const PopupMenuItem(value: 1, child: Text('Gemini')),
@@ -1065,4 +1170,29 @@ class _TranslateViewState extends State<TranslateView> {
           ),
         ),
       );
+}
+
+class _TranslateActionState {
+  const _TranslateActionState({
+    required this.busy,
+    required this.error,
+    required this.hasTranslated,
+    required this.canSave,
+  });
+
+  final bool busy;
+  final String? error;
+  final bool hasTranslated;
+  final bool canSave;
+
+  @override
+  bool operator ==(Object other) =>
+      other is _TranslateActionState &&
+      other.busy == busy &&
+      other.error == error &&
+      other.hasTranslated == hasTranslated &&
+      other.canSave == canSave;
+
+  @override
+  int get hashCode => Object.hash(busy, error, hasTranslated, canSave);
 }
