@@ -295,6 +295,22 @@ class _MainShellState extends State<MainShell> {
     }
   }
 
+  Future<void> _saveArticleTitle(Article article, String title) async {
+    final latestArticle = _articles.firstWhere(
+      (item) => item.id == article.id,
+      orElse: () => article,
+    );
+    final updated = latestArticle.withTitle(title);
+    await _articleStore.save(updated);
+    if (mounted) {
+      setState(
+        () => _articles = _articles
+            .map((item) => item.id == updated.id ? updated : item)
+            .toList(),
+      );
+    }
+  }
+
   Future<void> _savePresetLibrary(PresetLibrarySnapshot library) async {
     await _presetStore.save(library);
   }
@@ -320,6 +336,7 @@ class _MainShellState extends State<MainShell> {
           onProgress: (progress) => _saveProgress(article, progress),
           onPrivacyChanged: (isPrivate) =>
               _saveArticlePrivacy(article, isPrivate),
+          onTitleChanged: (title) => _saveArticleTitle(article, title),
         ),
       ),
     );

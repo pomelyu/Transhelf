@@ -147,6 +147,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerPrivateArticle => 'Private article';
 
   @override
+  String get readerEditTitle => 'Edit title';
+
+  @override
+  String get readerTitleSave => 'Save';
+
+  @override
+  String get articleTitleUpdated => 'Article title updated';
+
+  @override
+  String get articleTitleUpdateFailed => 'Could not update article title';
+
+  @override
   String get shelfSearchHint => 'Search articles';
 
   @override

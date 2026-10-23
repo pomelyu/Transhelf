@@ -147,6 +147,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get readerPrivateArticle => '私密文章';
 
   @override
+  String get readerEditTitle => '修改標題';
+
+  @override
+  String get readerTitleSave => '儲存';
+
+  @override
+  String get articleTitleUpdated => '文章標題已更新';
+
+  @override
+  String get articleTitleUpdateFailed => '無法更新文章標題';
+
+  @override
   String get shelfSearchHint => '搜尋文章';
 
   @override

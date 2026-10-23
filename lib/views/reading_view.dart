@@ -18,11 +18,13 @@ class ReadingView extends StatefulWidget {
     required this.article,
     required this.onProgress,
     required this.onPrivacyChanged,
+    required this.onTitleChanged,
   });
 
   final Article article;
   final Future<void> Function(double) onProgress;
   final Future<void> Function(bool) onPrivacyChanged;
+  final Future<void> Function(String) onTitleChanged;
 
   @override
   State<ReadingView> createState() => _ReadingViewState();
@@ -38,6 +40,7 @@ class _ReadingViewState extends State<ReadingView> with WidgetsBindingObserver {
   bool _closing = false;
   late double _progress = widget.article.progress;
   late final ValueNotifier<double> _progressNotifier = ValueNotifier(_progress);
+  late String _title = widget.article.title;
   late bool _isPrivate = widget.article.isPrivate;
   bool _savingPrivacy = false;
 
@@ -56,6 +59,40 @@ class _ReadingViewState extends State<ReadingView> with WidgetsBindingObserver {
       }
     } finally {
       if (mounted) setState(() => _savingPrivacy = false);
+    }
+  }
+
+  Future<void> _editTitle() async {
+    final l10n = AppLocalizations.of(context)!;
+    final title = await showDialog<String>(
+      context: context,
+      builder: (_) => _ReaderTitleDialog(initialTitle: _title, l10n: l10n),
+    );
+
+    final updatedTitle = title?.trim();
+    if (updatedTitle == null ||
+        updatedTitle.isEmpty ||
+        updatedTitle == _title ||
+        !mounted) {
+      return;
+    }
+    try {
+      await widget.onTitleChanged(updatedTitle);
+      if (!mounted) return;
+      setState(() => _title = updatedTitle);
+      StatusNotice.show(
+        context,
+        success: true,
+        message: l10n.articleTitleUpdated,
+      );
+    } catch (_) {
+      if (mounted) {
+        StatusNotice.show(
+          context,
+          success: false,
+          message: l10n.articleTitleUpdateFailed,
+        );
+      }
     }
   }
 
@@ -153,7 +190,8 @@ class _ReadingViewState extends State<ReadingView> with WidgetsBindingObserver {
                     ),
                     Expanded(
                       child: Text(
-                        widget.article.title,
+                        _title,
+                        key: const ValueKey('reader_title'),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -294,6 +332,8 @@ class _ReadingViewState extends State<ReadingView> with WidgetsBindingObserver {
           ],
         ),
         const SizedBox(height: 12),
+        const Divider(height: 1, color: AppPalette.border),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
@@ -315,6 +355,23 @@ class _ReadingViewState extends State<ReadingView> with WidgetsBindingObserver {
                 value: _isPrivate,
                 onChange: _setPrivacy,
               ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n.readerEditTitle,
+                style: const TextStyle(fontSize: 13, color: AppPalette.muted),
+              ),
+            ),
+            IconButton(
+              key: const ValueKey('reader_edit_title'),
+              tooltip: l10n.readerEditTitle,
+              onPressed: _editTitle,
+              icon: const Icon(FLucideIcons.pencil, size: 18),
+            ),
           ],
         ),
       ],
@@ -421,6 +478,59 @@ class _ReadingViewState extends State<ReadingView> with WidgetsBindingObserver {
           ),
       ],
     ),
+  );
+}
+
+class _ReaderTitleDialog extends StatefulWidget {
+  const _ReaderTitleDialog({required this.initialTitle, required this.l10n});
+
+  final String initialTitle;
+  final AppLocalizations l10n;
+
+  @override
+  State<_ReaderTitleDialog> createState() => _ReaderTitleDialogState();
+}
+
+class _ReaderTitleDialogState extends State<_ReaderTitleDialog> {
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.initialTitle,
+  );
+  late String _draft = widget.initialTitle;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    backgroundColor: AppPalette.surface,
+    title: Text(widget.l10n.readerEditTitle),
+    content: TextField(
+      key: const ValueKey('reader_title_input'),
+      controller: _controller,
+      autofocus: true,
+      maxLength: 80,
+      decoration: InputDecoration(
+        labelText: widget.l10n.articleTitle,
+        hintText: widget.l10n.articleTitleHint,
+      ),
+      onChanged: (value) => setState(() => _draft = value),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: Text(widget.l10n.articleCancel),
+      ),
+      FilledButton(
+        key: const ValueKey('reader_title_save_confirm'),
+        onPressed: _draft.trim().isEmpty
+            ? null
+            : () => Navigator.pop(context, _draft.trim()),
+        child: Text(widget.l10n.readerTitleSave),
+      ),
+    ],
   );
 }
 

@@ -52,6 +52,18 @@ class Article {
     isPrivate: isPrivate,
   );
 
+  Article withTitle(String value) => Article(
+    id: id,
+    title: value,
+    createdAt: createdAt,
+    sourceLanguage: sourceLanguage,
+    targetLanguage: targetLanguage,
+    service: service,
+    segments: segments,
+    progress: progress,
+    isPrivate: isPrivate,
+  );
+
   Article withPrivacy(bool value) => Article(
     id: id,
     title: title,

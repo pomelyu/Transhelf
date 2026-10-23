@@ -368,6 +368,30 @@ abstract class AppLocalizations {
   /// **'私密文章'**
   String get readerPrivateArticle;
 
+  /// No description provided for @readerEditTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'修改標題'**
+  String get readerEditTitle;
+
+  /// No description provided for @readerTitleSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'儲存'**
+  String get readerTitleSave;
+
+  /// No description provided for @articleTitleUpdated.
+  ///
+  /// In zh, this message translates to:
+  /// **'文章標題已更新'**
+  String get articleTitleUpdated;
+
+  /// No description provided for @articleTitleUpdateFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'無法更新文章標題'**
+  String get articleTitleUpdateFailed;
+
   /// No description provided for @shelfSearchHint.
   ///
   /// In zh, this message translates to:

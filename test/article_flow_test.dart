@@ -267,6 +267,63 @@ void main() {
     await tester.pumpAndSettle();
     expect((await store.load()).single.progress, greaterThan(0));
   });
+
+  testWidgets('reader can update and persist the article title', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(402, 874);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    SharedPreferences.setMockInitialValues({});
+    final preferences = await SharedPreferences.getInstance();
+    final store = _MemoryArticleStore();
+    final article = Article(
+      id: 'rename_article',
+      title: 'Original title',
+      createdAt: DateTime.utc(2026, 10, 14),
+      sourceLanguage: 'en',
+      targetLanguage: 'zh-TW',
+      service: 'google',
+      segments: const [
+        ArticleSegment(
+          source: 'A sufficiently long sentence for reading.',
+          translation: '這是一段用於閱讀的譯文。',
+        ),
+      ],
+    );
+    await store.save(article);
+
+    await tester.pumpWidget(
+      TranshelfApp(preferences: preferences, articleStore: store),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('nav.shelf')));
+    await tester.pumpAndSettle();
+    final card = find.byKey(const ValueKey('article_rename_article'));
+    await tester.tap(
+      find.descendant(of: card, matching: find.byType(InkWell)).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('reader_settings')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('reader_edit_title')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('reader_title_input')),
+      'Updated title',
+    );
+    tester.testTextInput.hide();
+    await tester.tap(find.byKey(const ValueKey('reader_title_save_confirm')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('status_notice_success')), findsOneWidget);
+    expect(
+      tester.widget<Text>(find.byKey(const ValueKey('reader_title'))).data,
+      'Updated title',
+    );
+    expect((await store.load()).single.title, 'Updated title');
+  });
 }
 
 class _MemoryArticleStore extends ArticleStore {
